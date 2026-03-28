@@ -24,7 +24,6 @@ Built for real-world game nights and designed to run in Docker
 -   Casino (includes scoring cheat sheet)
 -   Skyjo
 -   Catch Five
--   Downforce
 
 ------------------------------------------------------------------------
 
