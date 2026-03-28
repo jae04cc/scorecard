@@ -31,7 +31,7 @@ export async function GET() {
       const settings = JSON.parse(session.settings ?? "{}");
       const activePlayers = session.players.filter((p) => p.active);
       const allScores = session.rounds.flatMap((r) =>
-        r.scores.map((s) => ({ ...s, roundNumber: r.roundNumber }))
+        r.scores.map((s) => ({ ...s, roundNumber: r.roundNumber, metadata: s.metadata ?? undefined }))
       );
 
       const standings = computeStandings(game, activePlayers, allScores, settings);
