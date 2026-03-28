@@ -3,7 +3,7 @@ import type { Config } from "drizzle-kit";
 export default {
   schema: "./src/lib/db/schema.ts",
   out: "./drizzle",
-  driver: "libsql",
+  dialect: "sqlite",
   dbCredentials: {
     url: `file:${process.env.DATABASE_PATH ?? "./data/scorecard.db"}`,
   },
