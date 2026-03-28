@@ -10,18 +10,18 @@ const config: Config = {
     extend: {
       colors: {
         surface: {
-          DEFAULT: "#13131f",
-          card: "#1c1c2e",
-          elevated: "#24243a",
+          DEFAULT: "#1a1a1a",
+          card: "#242424",
+          elevated: "#2e2e2e",
         },
         accent: {
-          DEFAULT: "#9b8ec4",
-          hover: "#8276b0",
-          light: "#bab0dc",
+          DEFAULT: "#525252",
+          hover: "#3d3d3d",
+          light: "#737373",
         },
-        success: "#7ecbc9",
-        warning: "#e8c37a",
-        danger: "#e8a0b4",
+        success: "#16a34a",
+        warning: "#d97706",
+        danger: "#dc2626",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
