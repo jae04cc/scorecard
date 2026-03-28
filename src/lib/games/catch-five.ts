@@ -85,7 +85,7 @@ export const catchFiveGame: GameDefinition = {
     const totals = new Map<string, number>();
     for (const p of players) totals.set(p.id, 0);
 
-    const roundNums = [...new Set(scores.map((s) => s.roundNumber))].sort((a, b) => a - b);
+    const roundNums = Array.from(new Set(scores.map((s) => s.roundNumber))).sort((a, b) => a - b);
 
     for (const roundNum of roundNums) {
       const roundScores = scores.filter((s) => s.roundNumber === roundNum);
