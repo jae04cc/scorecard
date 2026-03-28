@@ -434,31 +434,34 @@ function NewGameForm() {
                           }}
                         />
                       )}
-                      {s.type === "boolean" && (
-                        <button
-                          onClick={() =>
-                            setSettings((prev) => ({ ...prev, [s.key]: !prev[s.key] }))
-                          }
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-colors shrink-0",
-                            settings[s.key]
-                              ? "border-accent bg-accent/10 text-accent"
-                              : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors",
-                            settings[s.key] ? "border-accent bg-accent" : "border-slate-500"
-                          )}>
-                            {settings[s.key] && (
-                              <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
-                                <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                      {s.type === "boolean" && (() => {
+                        const isEnabled = Boolean(settings[s.key]);
+                        return (
+                          <button
+                            onClick={() =>
+                              setSettings((prev) => ({ ...prev, [s.key]: !isEnabled }))
+                            }
+                            className={cn(
+                              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-colors shrink-0",
+                              isEnabled
+                                ? "border-accent bg-accent/10 text-accent"
+                                : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
                             )}
-                          </div>
-                          {settings[s.key] ? "On" : "Off"}
-                        </button>
-                      )}
+                          >
+                            <div className={cn(
+                              "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors",
+                              isEnabled ? "border-accent bg-accent" : "border-slate-500"
+                            )}>
+                              {isEnabled && (
+                                <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                                  <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              )}
+                            </div>
+                            {isEnabled ? "On" : "Off"}
+                          </button>
+                        );
+                      })()}
                       {s.type === "select" && (
                         <select
                           className="rounded-lg bg-surface-elevated border border-slate-600 px-2 py-1.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
@@ -510,3 +513,4 @@ export default function NewGamePage() {
     </Suspense>
   );
 }
+
