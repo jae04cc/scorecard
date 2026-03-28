@@ -133,7 +133,7 @@ export function RoundEntryModal({
     entry.type === "fields" || entry.type === "team-fields" ? entry.fields : []
   ).filter((f) => !f.showWhenSetting || settings[f.showWhenSetting.setting] === f.showWhenSetting.value);
   const phases = allFields.some((f) => f.phase !== undefined)
-    ? [...new Set(allFields.map((f) => f.phase ?? 1))].sort((a, b) => a - b)
+    ? Array.from(new Set(allFields.map((f) => f.phase ?? 1))).sort((a, b) => a - b)
     : null; // null = no phases, show everything at once
 
   // For team-fields games with an exclusive checkbox that has a linked picker (showWhen):
