@@ -263,7 +263,7 @@ export default function GamePage() {
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xl">{game.emoji}</span>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-base bg-slate-200/30 shrink-0">{game.emoji}</div>
               <h1 className="text-xl font-black text-white">{game.name}</h1>
               <Badge variant={session.status === "active" ? "success" : "default"}>
                 {session.status}

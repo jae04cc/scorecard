@@ -80,10 +80,7 @@ export default function HomePage() {
                 <Card className="hover:border-accent/50 hover:bg-surface-elevated transition-all active:scale-[0.98] h-full">
                   <CardBody className="p-3 items-center text-center">
                     <div
-                      className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-2",
-                        game.color
-                      )}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-xl mb-2 bg-slate-200/30"
                     >
                       {game.emoji}
                     </div>
@@ -126,7 +123,7 @@ export default function HomePage() {
                     )}>
                       <CardBody>
                         <div className="flex items-center gap-3">
-                          <span className="text-xl">{game?.emoji ?? "🎮"}</span>
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-base bg-slate-200/30 shrink-0">{game?.emoji ?? "🎮"}</div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-slate-200 text-sm">

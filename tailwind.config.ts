@@ -10,9 +10,9 @@ const config: Config = {
     extend: {
       colors: {
         surface: {
-          DEFAULT: "#1a1a1a",
-          card: "#242424",
-          elevated: "#2e2e2e",
+          DEFAULT: "#0e0e18",
+          card: "#1e1e30",
+          elevated: "#262640",
         },
         accent: {
           DEFAULT: "#525252",

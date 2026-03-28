@@ -108,7 +108,7 @@ export default function HistoryPage() {
                   <Card className={`hover:border-slate-600 transition-all active:scale-[0.99] cursor-pointer group ${s.status === "active" ? "border-success/40" : ""}`}>
                     <CardBody>
                       <div className="flex items-center gap-3">
-                        <div className="text-2xl shrink-0">{game?.emoji ?? "🎮"}</div>
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-xl shrink-0 bg-slate-200/30">{game?.emoji ?? "🎮"}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-white text-sm">
