@@ -35,25 +35,33 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await req.json();
-    const allowed: Array<keyof typeof sessions.$inferInsert> = [
-      "status",
-      "notes",
-      "settings",
-      "completedAt",
-    ];
+    const body = (await req.json()) as Partial<{
+      status: typeof sessions.$inferInsert.status;
+      notes: typeof sessions.$inferInsert.notes;
+      settings: typeof sessions.$inferInsert.settings;
+      completedAt: number | Date | null;
+    }>;
 
     const updates: Partial<typeof sessions.$inferInsert> = {};
-    for (const key of allowed) {
-      if (key in body) {
-        // completedAt is a timestamp_ms column — Drizzle needs a Date object, not a number
-        if (key === "completedAt" && typeof body[key] === "number") {
-          updates.completedAt = new Date(body[key]);
-        } else {
-          // @ts-expect-error — dynamic key assignment
-          updates[key] = body[key];
-        }
-      }
+
+    if ("status" in body) {
+      updates.status = body.status;
+    }
+
+    if ("notes" in body) {
+      updates.notes = body.notes;
+    }
+
+    if ("settings" in body) {
+      updates.settings = body.settings;
+    }
+
+    if ("completedAt" in body) {
+      // completedAt is a timestamp_ms column - Drizzle needs a Date object, not a number
+      updates.completedAt =
+        typeof body.completedAt === "number"
+          ? new Date(body.completedAt)
+          : body.completedAt;
     }
 
     if (Object.keys(updates).length === 0) {
