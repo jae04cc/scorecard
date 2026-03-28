@@ -1,0 +1,19 @@
+services:
+  scorecard:
+    build: .
+    container_name: scorecard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # SQLite database persists here — map to a host directory
+      - ./data:/data
+    environment:
+      - DATABASE_PATH=/data/scorecard.db
+      - NODE_ENV=production
+    # Optional: set a timezone
+    # - TZ=America/New_York
+
+  # Uncomment for Unraid reverse proxy setups (e.g. behind Nginx Proxy Manager)
+  # labels:
+  #   - "net.unraid.docker.icon=https://raw.githubusercontent.com/..."
