@@ -1,0 +1,36 @@
+{
+  "name": "scorecard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/lib/db/migrate.ts",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.6.2",
+    "clsx": "^2.1.0",
+    "drizzle-orm": "^0.30.8",
+    "lucide-react": "^0.363.0",
+    "next": "^14.2.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "swr": "^2.2.5",
+    "tailwind-merge": "^2.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "drizzle-kit": "^0.21.4",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0",
+    "tsx": "^4.7.2",
+    "typescript": "^5"
+  }
+}
