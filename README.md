@@ -21,7 +21,7 @@ Built for real-world game nights and designed to run in Docker
 ## 🎯 Supported Games (MVP)
 
 -   Spades
--   Casino (includes scoring cheat sheet)
+-   Casino
 -   Skyjo
 -   Catch Five
 
