@@ -2,9 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  background-color: #0a0a1a;
+}
+
 body {
   font-family: var(--font-inter), Inter, system-ui, sans-serif;
-  background: #1a1a1a;
+  background: linear-gradient(135deg, #0a0a1a 0%, #120d1f 50%, #1a0a2e 100%);
+  background-attachment: fixed;
   overscroll-behavior: none;
 }
 
