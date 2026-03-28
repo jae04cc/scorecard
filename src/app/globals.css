@@ -4,7 +4,7 @@
 
 body {
   font-family: var(--font-inter), Inter, system-ui, sans-serif;
-  background: #13131f;
+  background: #1a1a1a;
   overscroll-behavior: none;
 }
 
