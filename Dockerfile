@@ -1,16 +1,14 @@
 # Multi-stage build for minimal production image
 
 # ---- Stage 1: deps ----
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+FROM node:20-slim AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
 RUN npm ci
 
 # ---- Stage 2: builder ----
-FROM node:20-alpine AS builder
-RUN apk add --no-cache libc6-compat
+FROM node:20-slim AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -23,8 +21,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # ---- Stage 3: runner ----
-FROM node:20-alpine AS runner
-RUN apk add --no-cache libc6-compat
+FROM node:20-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -33,7 +30,7 @@ ENV DATABASE_PATH=/data/scorecard.db
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 --ingroup nodejs nextjs
 
 # The standalone output includes only what's needed
 COPY --from=builder /app/public ./public
