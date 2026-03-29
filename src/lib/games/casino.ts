@@ -49,7 +49,6 @@ export const casinoGame: GameDefinition = {
         description: "Captured the most cards (+3 pts)",
         fieldType: "checkbox",
         defaultValue: 0,
-        exclusiveWhenEven: true,
         showWhenSetting: { setting: "simpleScoring", value: false },
       },
       {
@@ -58,7 +57,6 @@ export const casinoGame: GameDefinition = {
         description: "Captured the most spades (+1 pt)",
         fieldType: "checkbox",
         defaultValue: 0,
-        exclusiveWhenEven: true,
         showWhenSetting: { setting: "simpleScoring", value: false },
       },
       {
@@ -152,8 +150,6 @@ export const casinoGame: GameDefinition = {
     const simpleScoring = (settings["simpleScoring"] as boolean) ?? true;
 
     if (simpleScoring) {
-      const totalPoints = entries.reduce((s, e) => s + (e.fields["pointsScored"] ?? 0), 0);
-      if (totalPoints !== 11) return `Points must total exactly 11 (currently ${totalPoints}).`;
       return null;
     }
 
@@ -259,7 +255,7 @@ export const casinoGame: GameDefinition = {
     {
       key: "simpleScoring",
       label: "Simple Scoring",
-      description: "Enter total points captured per hand (must total 11).",
+      description: "Enter total points captured per hand.",
       type: "boolean",
       defaultValue: true,
     },
@@ -290,9 +286,6 @@ export const casinoGame: GameDefinition = {
     const countSweeps = (settings["countSweeps"] as boolean) ?? false;
     const sweepPoints = (settings["sweepPoints"] as number) ?? 1;
     const targetScore = (settings["targetScore"] as number) ?? 21;
-    const playerCount = context?.playerCount ?? 0;
-    const isEven = playerCount > 0 && playerCount % 2 === 0;
-
     const scoringEntries: Array<{ label: string; value?: string | number; note?: string }> = [
       { label: "Most cards", value: "3 pts" },
       { label: "Most spades", value: "1 pt" },
@@ -306,11 +299,9 @@ export const casinoGame: GameDefinition = {
 
     const notesEntries: Array<{ label: string; value?: string | number; note?: string }> = [
       { label: "Total points available", value: countSweeps ? "11 (+ sweeps)" : "11" },
+      { label: "Most cards/spades tied", note: "No points awarded" },
+      { label: "Target to win", value: `${targetScore} pts` },
     ];
-    if (!isEven) {
-      notesEntries.push({ label: "Most cards/spades", note: "Tied = No Points" });
-    }
-    notesEntries.push({ label: "Target to win", value: `${targetScore} pts` });
 
     return [
       { title: "Scoring", entries: scoringEntries },

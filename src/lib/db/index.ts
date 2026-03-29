@@ -62,5 +62,20 @@ export async function runMigrations() {
     CREATE INDEX IF NOT EXISTS idx_rounds_session ON rounds(session_id);
     CREATE INDEX IF NOT EXISTS idx_scores_round ON round_scores(round_id);
     CREATE INDEX IF NOT EXISTS idx_players_session ON session_players(session_id);
+
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      sub TEXT NOT NULL UNIQUE,
+      email TEXT,
+      name TEXT,
+      role TEXT NOT NULL DEFAULT 'user',
+      created_at INTEGER NOT NULL,
+      last_login_at INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
 }
