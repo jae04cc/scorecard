@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Shield, Users, Settings, Save, Check, ChevronDown, Globe } from "lucide-react";
+import { ArrowLeft, Shield, Users, Settings, Save, Check, ChevronDown, Globe, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -55,6 +55,7 @@ export default function AdminPage() {
   const [localPassword, setLocalPassword] = useState("");
   const [localPasswordConfirm, setLocalPasswordConfirm] = useState("");
   const [showBreakGlassForm, setShowBreakGlassForm] = useState(false);
+  const [showBreakGlassSection, setShowBreakGlassSection] = useState(false);
   const [showOidcConfig, setShowOidcConfig] = useState(false);
 
   // Users state
@@ -90,16 +91,14 @@ export default function AdminPage() {
     const hasExistingCredentials = settings.has_local_admin === "true";
 
     if (enabling) {
-      if (!settings.local_admin_username.trim()) {
-        setSettingsError("A break-glass username is required when enabling authentication.");
-        return;
-      }
-      if (!hasExistingCredentials && !localPassword) {
-        setSettingsError("A break-glass password is required when enabling authentication for the first time.");
+      if (!settings.local_admin_username.trim() || (!hasExistingCredentials && !localPassword)) {
+        setSettingsError("A break-glass account must be configured before saving with authentication enabled.");
+        setShowBreakGlassSection(true);
         return;
       }
       if (localPassword && localPassword !== localPasswordConfirm) {
         setSettingsError("Passwords do not match.");
+        setShowBreakGlassSection(true);
         return;
       }
     }
@@ -122,6 +121,7 @@ export default function AdminPage() {
       setLocalPassword("");
       setLocalPasswordConfirm("");
       setShowBreakGlassForm(false);
+      setShowBreakGlassSection(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (e) {
@@ -154,8 +154,16 @@ export default function AdminPage() {
 
   const oidcEnabled = settings.oidc_enabled === "true";
   const hasLocalAdmin = settings.has_local_admin === "true";
-  const showBGForm = !hasLocalAdmin || showBreakGlassForm;
   const adminCount = userList.filter((u) => u.role === "admin").length;
+
+  const handleOidcToggle = () => {
+    const turningOn = !oidcEnabled;
+    set("oidc_enabled", turningOn ? "true" : "false");
+    if (turningOn) {
+      setShowOidcConfig(true);
+      setShowBreakGlassSection(true);
+    }
+  };
 
   const redirectUri = settings.app_url
     ? `${settings.app_url.replace(/\/$/, "")}/api/auth/callback/oidc`
@@ -262,7 +270,7 @@ export default function AdminPage() {
                   </div>
                   <ToggleButton
                     enabled={oidcEnabled}
-                    onToggle={() => set("oidc_enabled", oidcEnabled ? "false" : "true")}
+                    onToggle={handleOidcToggle}
                   />
                 </div>
 
@@ -323,69 +331,86 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* Break-glass account */}
-                    <div className="bg-surface-card rounded-2xl px-4 py-4 space-y-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                            Break-glass Account
-                          </div>
-                          <p className="text-xs text-slate-600 mt-0.5">
+                    {/* Break-glass account — collapsible */}
+                    <div className="bg-surface-card rounded-2xl overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setShowBreakGlassSection((v) => !v)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors"
+                      >
+                        <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                          Break-glass Account
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!showBreakGlassSection && (
+                            hasLocalAdmin
+                              ? <span className="flex items-center gap-1 text-xs text-success"><Check size={11} />Configured</span>
+                              : <span className="flex items-center gap-1 text-xs text-amber-500"><AlertCircle size={11} />Not set</span>
+                          )}
+                          <ChevronDown
+                            size={14}
+                            className={cn("text-slate-500 transition-transform", showBreakGlassSection && "rotate-180")}
+                          />
+                        </div>
+                      </button>
+
+                      {showBreakGlassSection && (
+                        <div className="px-4 pb-4 space-y-3 border-t border-slate-700/50 pt-4">
+                          <p className="text-xs text-slate-600">
                             Local admin login that works even if SSO is misconfigured.
                           </p>
-                        </div>
-                        {hasLocalAdmin && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowBreakGlassForm((v) => !v);
-                              setLocalPassword("");
-                              setLocalPasswordConfirm("");
-                            }}
-                            className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-600 text-xs text-slate-400 hover:border-slate-500 hover:text-slate-300 transition-colors"
-                          >
-                            Change
-                            <ChevronDown size={12} className={cn("transition-transform", showBreakGlassForm && "rotate-180")} />
-                          </button>
-                        )}
-                      </div>
 
-                      {hasLocalAdmin && !showBGForm && (
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/10 border border-success/20">
-                          <Check size={13} className="text-success shrink-0" />
-                          <span className="text-xs text-success">
-                            Configured — username: <span className="font-mono">{settings.local_admin_username}</span>
-                          </span>
-                        </div>
-                      )}
+                          {hasLocalAdmin && !showBreakGlassForm && (
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/10 border border-success/20 flex-1">
+                                <Check size={13} className="text-success shrink-0" />
+                                <span className="text-xs text-success">
+                                  Configured — username: <span className="font-mono">{settings.local_admin_username}</span>
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowBreakGlassForm(true);
+                                  setLocalPassword("");
+                                  setLocalPasswordConfirm("");
+                                }}
+                                className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-600 text-xs text-slate-400 hover:border-slate-500 hover:text-slate-300 transition-colors"
+                              >
+                                Change
+                              </button>
+                            </div>
+                          )}
 
-                      {showBGForm && (
-                        <div className="space-y-3">
-                          <Input
-                            label="Username"
-                            placeholder="admin"
-                            value={settings.local_admin_username}
-                            onChange={(e) => set("local_admin_username", e.target.value)}
-                            autoComplete="off"
-                          />
-                          <Input
-                            label={hasLocalAdmin ? "New Password (leave blank to keep current)" : "Password"}
-                            type="password"
-                            placeholder={hasLocalAdmin ? "••••••••" : "Set a strong password"}
-                            value={localPassword}
-                            onChange={(e) => setLocalPassword(e.target.value)}
-                            autoComplete="new-password"
-                          />
-                          {localPassword && (
-                            <Input
-                              label="Confirm Password"
-                              type="password"
-                              placeholder="Re-enter password"
-                              value={localPasswordConfirm}
-                              onChange={(e) => setLocalPasswordConfirm(e.target.value)}
-                              autoComplete="new-password"
-                              error={localPasswordConfirm && localPassword !== localPasswordConfirm ? "Passwords do not match" : undefined}
-                            />
+                          {(!hasLocalAdmin || showBreakGlassForm) && (
+                            <div className="space-y-3">
+                              <Input
+                                label="Username"
+                                placeholder="admin"
+                                value={settings.local_admin_username}
+                                onChange={(e) => set("local_admin_username", e.target.value)}
+                                autoComplete="off"
+                              />
+                              <Input
+                                label={hasLocalAdmin ? "New Password (leave blank to keep current)" : "Password"}
+                                type="password"
+                                placeholder={hasLocalAdmin ? "••••••••" : "Set a strong password"}
+                                value={localPassword}
+                                onChange={(e) => setLocalPassword(e.target.value)}
+                                autoComplete="new-password"
+                              />
+                              {localPassword && (
+                                <Input
+                                  label="Confirm Password"
+                                  type="password"
+                                  placeholder="Re-enter password"
+                                  value={localPasswordConfirm}
+                                  onChange={(e) => setLocalPasswordConfirm(e.target.value)}
+                                  autoComplete="new-password"
+                                  error={localPasswordConfirm && localPassword !== localPasswordConfirm ? "Passwords do not match" : undefined}
+                                />
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
