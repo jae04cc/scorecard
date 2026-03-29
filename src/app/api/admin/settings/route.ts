@@ -5,6 +5,7 @@ import { hashPassword } from "@/lib/password";
 
 // Keys returned to the client (never expose hashes or internal secrets)
 const READABLE_KEYS = [
+  "app_url",
   "oidc_enabled",
   "oidc_issuer",
   "oidc_client_id",
@@ -15,6 +16,7 @@ const READABLE_KEYS = [
 ] as const;
 
 const WRITABLE_KEYS = [
+  "app_url",
   "oidc_enabled",
   "oidc_issuer",
   "oidc_client_id",
