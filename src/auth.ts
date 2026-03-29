@@ -56,8 +56,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
     settings.oidc_client_secret
   ) {
     providers.push({
-      id: "authentik",
-      name: "Authentik",
+      id: "oidc",
+      name: "SSO",
       type: "oidc",
       issuer: settings.oidc_issuer,
       clientId: settings.oidc_client_id,
