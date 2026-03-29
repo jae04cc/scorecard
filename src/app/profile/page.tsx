@@ -112,7 +112,7 @@ export default function ProfilePage() {
             </div>
 
             {/* SSO button */}
-            <Button size="lg" onClick={() => signIn("authentik", { callbackUrl: "/" })}>
+            <Button size="lg" onClick={() => signIn("oidc", { callbackUrl: "/" })}>
               <LogIn size={16} />
               Sign In with SSO
             </Button>

@@ -209,7 +209,7 @@ export default function AdminPage() {
               <>
                 <div className="bg-surface-card rounded-2xl px-4 py-4 space-y-4">
                   <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                    Authentik / OIDC Provider
+                    OIDC Provider
                   </div>
                   <Input
                     label="Issuer URL"
@@ -236,9 +236,9 @@ export default function AdminPage() {
                 </div>
                 <div className="bg-surface-card/40 rounded-xl px-4 py-3 border border-slate-700/50">
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    In Authentik, set the redirect URI to{" "}
+                    Set the redirect URI in your OIDC provider to{" "}
                     <span className="text-slate-300 font-mono break-all">
-                      [your-app-url]/api/auth/callback/authentik
+                      [your-app-url]/api/auth/callback/oidc
                     </span>
                   </p>
                 </div>
