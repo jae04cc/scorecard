@@ -149,13 +149,7 @@ function NewGameForm() {
       return;
     }
 
-    const filled = playerNames.map((n) => toProperCase(n)).filter(Boolean);
-    if (filled.length < selectedGame.minPlayers) {
-      setError(
-        `${selectedGame.name} requires at least ${selectedGame.minPlayers} players.`
-      );
-      return;
-    }
+    const filled = playerNames.map((n, i) => toProperCase(n) || `Player ${i + 1}`);
 
     const dup = findDuplicateName(filled);
     if (dup) {

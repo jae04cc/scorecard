@@ -104,6 +104,32 @@ export const roundScoresRelations = relations(roundScores, ({ one }) => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Users — created on first OIDC sign-in; first user gets role=admin
+// ---------------------------------------------------------------------------
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  sub: text("sub").notNull().unique(), // OIDC subject claim (stable identifier)
+  email: text("email"),
+  name: text("name"),
+  role: text("role", { enum: ["admin", "user"] }).notNull().default("user"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  lastLoginAt: integer("last_login_at", { mode: "timestamp_ms" }),
+});
+
+export type User = typeof users.$inferSelect;
+
+// ---------------------------------------------------------------------------
+// App-wide settings — key/value store for admin-configured options
+// e.g. oidc_enabled, oidc_issuer, oidc_client_id, stats_visibility, auth_secret
+// ---------------------------------------------------------------------------
+export const appSettings = sqliteTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+
+export type AppSetting = typeof appSettings.$inferSelect;
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 export type Session = typeof sessions.$inferSelect;

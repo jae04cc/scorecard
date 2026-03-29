@@ -127,7 +127,7 @@ export function ScoreTable({
       <table className="w-full text-sm table-fixed">
         <thead>
           <tr>
-            {columns.map((col) => {
+            {columns.map((col, colIndex) => {
               const standing = getStanding(col);
               const winning = standing?.isWinning ?? false;
               const bags = standing?.extras?.["bags"] as number | undefined;
@@ -153,7 +153,7 @@ export function ScoreTable({
                 );
               }
               return (
-                <th key={col.key} className="px-2 py-2" style={{ width: `${100 / columns.length}%` }}>
+                <th key={col.key} className={cn("py-2", colIndex === 0 ? "pl-0 pr-1" : colIndex === columns.length - 1 ? "pl-1 pr-0" : "px-1")} style={{ width: `${100 / columns.length}%` }}>
                   <div className={cn(
                     "flex flex-col items-center rounded-2xl px-2 py-4 bg-surface-card",
                     winning && "ring-1 ring-success/50"

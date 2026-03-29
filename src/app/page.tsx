@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Clock, Trophy, ChevronRight, Medal } from "lucide-react";
+import { Clock, Trophy, ChevronRight, Medal, Settings, User } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { cn, formatDate } from "@/lib/utils";
@@ -49,6 +49,18 @@ export default function HomePage() {
             <p className="text-slate-400 text-sm mt-0.5">Track any game, any time</p>
           </div>
           <div className="flex items-center gap-1">
+            <Link
+              href="/admin"
+              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+            >
+              <Settings size={22} />
+            </Link>
+            <Link
+              href="/profile"
+              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+            >
+              <User size={22} />
+            </Link>
             <Link
               href="/players"
               className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
