@@ -90,6 +90,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
 
   return {
     secret,
+    trustHost: true,
     providers,
     callbacks: {
       async jwt({ token, account, profile }) {
