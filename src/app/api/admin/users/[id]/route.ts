@@ -12,6 +12,18 @@ export async function PATCH(
     if (role !== "admin" && role !== "user") {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
+
+    // Prevent demoting the last admin
+    if (role === "user") {
+      const admins = await db.select().from(users).where(eq(users.role, "admin"));
+      if (admins.length === 1 && admins[0].id === params.id) {
+        return NextResponse.json(
+          { error: "Cannot demote the last admin." },
+          { status: 409 }
+        );
+      }
+    }
+
     await db.update(users).set({ role }).where(eq(users.id, params.id));
     return NextResponse.json({ ok: true });
   } catch (err) {
