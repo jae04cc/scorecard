@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Shield, Users, Settings, Save, Check } from "lucide-react";
+import { ArrowLeft, Shield, Users, Settings, Save, Check, ChevronDown, Globe } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { cn, formatDateTime } from "@/lib/utils";
 
 interface AppSettings {
+  app_url: string;
   oidc_enabled: string;
   oidc_issuer: string;
   oidc_client_id: string;
@@ -27,6 +28,7 @@ interface UserRow {
 }
 
 const DEFAULTS: AppSettings = {
+  app_url: "",
   oidc_enabled: "false",
   oidc_issuer: "",
   oidc_client_id: "",
@@ -47,6 +49,7 @@ export default function AdminPage() {
   const [roleChanging, setRoleChanging] = useState<string | null>(null);
   const [localPassword, setLocalPassword] = useState("");
   const [localPasswordConfirm, setLocalPasswordConfirm] = useState("");
+  const [showBreakGlassForm, setShowBreakGlassForm] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -58,6 +61,9 @@ export default function AdminPage() {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  const set = (key: keyof AppSettings, value: string) =>
+    setSettings((prev) => ({ ...prev, [key]: value }));
 
   const handleRoleToggle = async (user: UserRow) => {
     const newRole = user.role === "admin" ? "user" : "admin";
@@ -74,16 +80,12 @@ export default function AdminPage() {
     }
   };
 
-  const set = (key: keyof AppSettings, value: string) =>
-    setSettings((prev) => ({ ...prev, [key]: value }));
-
   const handleSave = async () => {
     setError(null);
 
     const enabling = settings.oidc_enabled === "true";
     const hasExistingCredentials = settings.has_local_admin === "true";
 
-    // Validate break-glass credentials when enabling auth
     if (enabling) {
       if (!settings.local_admin_username.trim()) {
         setError("A break-glass username is required when enabling authentication.");
@@ -103,7 +105,6 @@ export default function AdminPage() {
     try {
       const payload: Record<string, string> = { ...settings };
       if (localPassword) payload.local_admin_password = localPassword;
-      // Never send these synthetic/read-only fields back
       delete payload.has_local_admin;
 
       const res = await fetch("/api/admin/settings", {
@@ -113,11 +114,11 @@ export default function AdminPage() {
       });
       if (!res.ok) throw new Error("Failed to save settings");
 
-      // Refetch to get updated has_local_admin flag
       const updated = await fetch("/api/admin/settings").then((r) => r.json());
       setSettings((prev) => ({ ...prev, ...updated }));
       setLocalPassword("");
       setLocalPasswordConfirm("");
+      setShowBreakGlassForm(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (e) {
@@ -128,14 +129,17 @@ export default function AdminPage() {
   };
 
   const oidcEnabled = settings.oidc_enabled === "true";
+  const hasLocalAdmin = settings.has_local_admin === "true";
 
-  const ToggleButton = ({
-    enabled,
-    onToggle,
-  }: {
-    enabled: boolean;
-    onToggle: () => void;
-  }) => (
+  // Derive the redirect URI from app_url if set
+  const redirectUri = settings.app_url
+    ? `${settings.app_url.replace(/\/$/, "")}/api/auth/callback/oidc`
+    : "[your-app-url]/api/auth/callback/oidc";
+
+  // Break-glass form is shown when: credentials don't exist yet, OR user clicked "Change"
+  const showBGForm = !hasLocalAdmin || showBreakGlassForm;
+
+  const ToggleButton = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
     <button
       type="button"
       onClick={onToggle}
@@ -146,21 +150,13 @@ export default function AdminPage() {
           : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
       )}
     >
-      <div
-        className={cn(
-          "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors",
-          enabled ? "border-accent bg-accent" : "border-slate-500"
-        )}
-      >
+      <div className={cn(
+        "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors",
+        enabled ? "border-accent bg-accent" : "border-slate-500"
+      )}>
         {enabled && (
           <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
-            <path
-              d="M1 3L3 5L7 1"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </div>
@@ -182,13 +178,29 @@ export default function AdminPage() {
 
       <main className="flex-1 px-5 pb-10 space-y-8">
 
+        {/* ── General ── */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Globe size={14} className="text-slate-500" />
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">General</h2>
+          </div>
+          <div className="bg-surface-card rounded-2xl px-4 py-4">
+            <Input
+              label="App URL"
+              placeholder="https://sc.example.com"
+              value={settings.app_url}
+              onChange={(e) => set("app_url", e.target.value)}
+              autoComplete="off"
+              hint="The public URL of this app. Required for authentication callbacks."
+            />
+          </div>
+        </section>
+
         {/* ── Authentication ── */}
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Shield size={14} className="text-slate-500" />
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              Authentication
-            </h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Authentication</h2>
           </div>
           <div className="space-y-3">
 
@@ -204,16 +216,16 @@ export default function AdminPage() {
               />
             </div>
 
-            {/* OIDC config */}
             {oidcEnabled && (
               <>
+                {/* OIDC config */}
                 <div className="bg-surface-card rounded-2xl px-4 py-4 space-y-4">
                   <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
                     OIDC Provider
                   </div>
                   <Input
                     label="Issuer URL"
-                    placeholder="https://auth.yourdomain.com/application/o/scorecard/"
+                    placeholder="https://auth.yourdomain.com/application/o/app/"
                     value={settings.oidc_issuer}
                     onChange={(e) => set("oidc_issuer", e.target.value)}
                     autoComplete="off"
@@ -234,61 +246,88 @@ export default function AdminPage() {
                     autoComplete="off"
                   />
                 </div>
+
+                {/* Redirect URI hint — dynamic based on app_url */}
                 <div className="bg-surface-card/40 rounded-xl px-4 py-3 border border-slate-700/50">
                   <p className="text-xs text-slate-500 leading-relaxed">
                     Set the redirect URI in your OIDC provider to{" "}
-                    <span className="text-slate-300 font-mono break-all">
-                      [your-app-url]/api/auth/callback/oidc
+                    <span className={cn(
+                      "font-mono break-all",
+                      settings.app_url ? "text-slate-300" : "text-slate-600 italic"
+                    )}>
+                      {redirectUri}
                     </span>
                   </p>
                 </div>
-              </>
-            )}
 
-            {/* Break-glass local admin — always required when auth is enabled */}
-            {oidcEnabled && (
-              <div className="bg-surface-card rounded-2xl px-4 py-4 space-y-4">
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                    Break-glass Account
+                {/* Break-glass account */}
+                <div className="bg-surface-card rounded-2xl px-4 py-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                        Break-glass Account
+                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        Local admin login that works even if SSO is misconfigured.
+                      </p>
+                    </div>
+                    {hasLocalAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowBreakGlassForm((v) => !v);
+                          setLocalPassword("");
+                          setLocalPasswordConfirm("");
+                        }}
+                        className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-600 text-xs text-slate-400 hover:border-slate-500 hover:text-slate-300 transition-colors"
+                      >
+                        Change
+                        <ChevronDown size={12} className={cn("transition-transform", showBreakGlassForm && "rotate-180")} />
+                      </button>
+                    )}
                   </div>
-                  <p className="text-xs text-slate-600 mt-1">
-                    A local admin account that always works, even if SSO is misconfigured.
-                  </p>
+
+                  {hasLocalAdmin && !showBGForm && (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/10 border border-success/20">
+                      <Check size={13} className="text-success shrink-0" />
+                      <span className="text-xs text-success">
+                        Configured — username: <span className="font-mono">{settings.local_admin_username}</span>
+                      </span>
+                    </div>
+                  )}
+
+                  {showBGForm && (
+                    <div className="space-y-3">
+                      <Input
+                        label="Username"
+                        placeholder="admin"
+                        value={settings.local_admin_username}
+                        onChange={(e) => set("local_admin_username", e.target.value)}
+                        autoComplete="off"
+                      />
+                      <Input
+                        label={hasLocalAdmin ? "New Password (leave blank to keep current)" : "Password"}
+                        type="password"
+                        placeholder={hasLocalAdmin ? "••••••••" : "Set a strong password"}
+                        value={localPassword}
+                        onChange={(e) => setLocalPassword(e.target.value)}
+                        autoComplete="new-password"
+                      />
+                      {localPassword && (
+                        <Input
+                          label="Confirm Password"
+                          type="password"
+                          placeholder="Re-enter password"
+                          value={localPasswordConfirm}
+                          onChange={(e) => setLocalPasswordConfirm(e.target.value)}
+                          autoComplete="new-password"
+                          error={localPasswordConfirm && localPassword !== localPasswordConfirm ? "Passwords do not match" : undefined}
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
-                {settings.has_local_admin === "true" && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/10 border border-success/20">
-                    <Check size={13} className="text-success shrink-0" />
-                    <span className="text-xs text-success">Break-glass account is configured</span>
-                  </div>
-                )}
-                <Input
-                  label="Username"
-                  placeholder="admin"
-                  value={settings.local_admin_username}
-                  onChange={(e) => set("local_admin_username", e.target.value)}
-                  autoComplete="off"
-                />
-                <Input
-                  label={settings.has_local_admin === "true" ? "New Password (leave blank to keep current)" : "Password"}
-                  type="password"
-                  placeholder={settings.has_local_admin === "true" ? "••••••••" : "Set a strong password"}
-                  value={localPassword}
-                  onChange={(e) => setLocalPassword(e.target.value)}
-                  autoComplete="new-password"
-                />
-                {localPassword && (
-                  <Input
-                    label="Confirm Password"
-                    type="password"
-                    placeholder="Re-enter password"
-                    value={localPasswordConfirm}
-                    onChange={(e) => setLocalPasswordConfirm(e.target.value)}
-                    autoComplete="new-password"
-                    error={localPasswordConfirm && localPassword !== localPasswordConfirm ? "Passwords do not match" : undefined}
-                  />
-                )}
-              </div>
+              </>
             )}
           </div>
         </section>
@@ -297,37 +336,33 @@ export default function AdminPage() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Settings size={14} className="text-slate-500" />
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              Settings
-            </h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Settings</h2>
           </div>
-          <div className="space-y-3">
-            <div className="bg-surface-card rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
-              <div>
-                <div className="font-medium text-slate-200 text-sm">Stats Page Visibility</div>
-                <div className="text-xs text-slate-500">
-                  {settings.stats_visibility === "global"
-                    ? "Everyone can see the full leaderboard"
-                    : "Users only see their own stats"}
-                </div>
+          <div className="bg-surface-card rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
+            <div>
+              <div className="font-medium text-slate-200 text-sm">Stats Page Visibility</div>
+              <div className="text-xs text-slate-500">
+                {settings.stats_visibility === "global"
+                  ? "Everyone can see the full leaderboard"
+                  : "Users only see their own stats"}
               </div>
-              <div className="flex gap-1.5 shrink-0">
-                {(["global", "scoped"] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => set("stats_visibility", v)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors",
-                      settings.stats_visibility === v
-                        ? "border-accent bg-accent/10 text-white"
-                        : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
-                    )}
-                  >
-                    {v === "global" ? "Everyone" : "Per User"}
-                  </button>
-                ))}
-              </div>
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+              {(["global", "scoped"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => set("stats_visibility", v)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors",
+                    settings.stats_visibility === v
+                      ? "border-accent bg-accent/10 text-white"
+                      : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
+                  )}
+                >
+                  {v === "global" ? "Everyone" : "Per User"}
+                </button>
+              ))}
             </div>
           </div>
         </section>
@@ -336,9 +371,7 @@ export default function AdminPage() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Users size={14} className="text-slate-500" />
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
-              Users
-            </h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Users</h2>
           </div>
           {userList.length === 0 ? (
             <div className="bg-surface-card rounded-2xl px-4 py-8 flex flex-col items-center text-center gap-2">
@@ -399,15 +432,9 @@ export default function AdminPage() {
       <footer className="px-5 pb-8" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}>
         <Button size="lg" onClick={handleSave} loading={saving} disabled={loading}>
           {saved ? (
-            <>
-              <Check size={16} />
-              Saved
-            </>
+            <><Check size={16} />Saved</>
           ) : (
-            <>
-              <Save size={16} />
-              Save Settings
-            </>
+            <><Save size={16} />Save Settings</>
           )}
         </Button>
       </footer>

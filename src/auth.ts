@@ -45,6 +45,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
   const settings = await loadSettings();
   const secret = await getOrCreateSecret(settings);
 
+  // Let Auth.js know its public URL so callback URIs are constructed correctly
+  if (settings.app_url) {
+    process.env.AUTH_URL = settings.app_url;
+  }
+
   const oidcEnabled = settings.oidc_enabled === "true";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const providers: any[] = [];
