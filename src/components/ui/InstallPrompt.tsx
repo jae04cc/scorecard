@@ -50,13 +50,13 @@ export function InstallPrompt() {
         </p>
         <button
           onClick={handleInstall}
-          className="px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 transition-colors shrink-0"
+          className="px-3 py-1.5 rounded-xl bg-accent text-white text-xs font-semibold transition-colors shrink-0"
         >
           Install
         </button>
         <button
           onClick={handleDismiss}
-          className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
+          className="p-1 text-slate-500 transition-colors"
         >
           <X size={14} />
         </button>

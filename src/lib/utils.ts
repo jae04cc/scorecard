@@ -43,7 +43,7 @@ export function formatTime(date: DateLike): string {
 export function formatDateTime(date: DateLike): string {
   const d = toDate(date);
   if (!d) return "—";
-  return `${formatDate(d)} at ${formatTime(d)}`;
+  return `${formatDate(d)} - ${formatTime(d)}`;
 }
 
 export function formatDuration(start: DateLike, end: DateLike): string {

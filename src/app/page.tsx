@@ -83,7 +83,7 @@ export default function HomePage() {
             {isWalled ? (
               <Link
                 href="/profile"
-                className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+                className="p-2 rounded-xl text-slate-400 transition-colors"
               >
                 <User size={22} />
               </Link>
@@ -92,26 +92,26 @@ export default function HomePage() {
                 {isAdmin && (
                   <Link
                     href="/admin"
-                    className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+                    className="p-2 rounded-xl text-slate-400 transition-colors"
                   >
                     <Settings size={22} />
                   </Link>
                 )}
                 <Link
                   href="/profile"
-                  className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+                  className="p-2 rounded-xl text-slate-400 transition-colors"
                 >
                   <User size={22} />
                 </Link>
                 <Link
                   href="/players"
-                  className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+                  className="p-2 rounded-xl text-slate-400 transition-colors"
                 >
                   <Medal size={22} />
                 </Link>
                 <Link
                   href="/history"
-                  className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+                  className="p-2 rounded-xl text-slate-400 transition-colors"
                 >
                   <Clock size={22} />
                 </Link>
@@ -136,8 +136,8 @@ export default function HomePage() {
                 <Card className={cn(
                   "transition-all active:scale-[0.98] h-full",
                   isWalled
-                    ? "opacity-50 hover:opacity-70"
-                    : "hover:border-accent/50 hover:bg-surface-elevated"
+                    ? "opacity-50"
+                    : ""
                 )}>
                   <CardBody className="p-3 items-center text-center">
                     <div
@@ -168,7 +168,7 @@ export default function HomePage() {
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
                 Recent Games
               </h2>
-              <Link href="/history" className="text-xs text-accent-light hover:text-accent">
+              <Link href="/history" className="text-xs text-accent-light">
                 See all
               </Link>
             </div>
@@ -182,7 +182,7 @@ export default function HomePage() {
                   <Link key={s.id} href={href} className="block">
                     <Card className={cn(
                       "transition-all",
-                      isActive ? "border-success/40 hover:border-success/70" : "hover:border-slate-600"
+                      isActive ? "border-success/40" : ""
                     )}>
                       <CardBody>
                         <div className="flex items-center gap-3">
@@ -237,7 +237,7 @@ export default function HomePage() {
           </p>
           <button
             onClick={() => signIn("oidc", { callbackUrl: "/" })}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent text-white font-bold text-sm hover:bg-accent/90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent text-white font-bold text-sm transition-colors"
           >
             <LogIn size={16} />
             Sign In

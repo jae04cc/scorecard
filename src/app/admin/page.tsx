@@ -177,7 +177,7 @@ export default function AdminPage() {
         "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-colors shrink-0",
         enabled
           ? "border-accent bg-accent/10 text-accent"
-          : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
+          : "border-slate-600 bg-surface text-slate-400"
       )}
     >
       <div className={cn(
@@ -199,7 +199,7 @@ export default function AdminPage() {
       <header className="flex items-center gap-3 px-5 pt-10 pb-4">
         <button
           onClick={() => router.push("/")}
-          className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+          className="p-2 rounded-xl text-slate-400 transition-colors"
         >
           <ArrowLeft size={22} />
         </button>
@@ -207,7 +207,7 @@ export default function AdminPage() {
         <div className="ml-auto">
           <button
             onClick={() => router.push("/")}
-            className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl text-slate-400 transition-colors"
           >
             <Home size={20} />
           </button>
@@ -229,7 +229,7 @@ export default function AdminPage() {
                 "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-colors",
                 activeTab === id
                   ? "bg-surface-elevated text-white"
-                  : "text-slate-500 hover:text-slate-300"
+                  : "text-slate-500"
               )}
             >
               <Icon size={14} />
@@ -289,7 +289,7 @@ export default function AdminPage() {
                       <button
                         type="button"
                         onClick={() => setShowOidcConfig((v) => !v)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors"
                       >
                         <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
                           OIDC Provider
@@ -344,7 +344,7 @@ export default function AdminPage() {
                       <button
                         type="button"
                         onClick={() => setShowBreakGlassSection((v) => !v)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors"
                       >
                         <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
                           Break-glass Account
@@ -383,7 +383,7 @@ export default function AdminPage() {
                                   setLocalPassword("");
                                   setLocalPasswordConfirm("");
                                 }}
-                                className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-600 text-xs text-slate-400 hover:border-slate-500 hover:text-slate-300 transition-colors"
+                                className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-600 text-xs text-slate-400 transition-colors"
                               >
                                 Change
                               </button>
@@ -453,7 +453,7 @@ export default function AdminPage() {
                         "px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors",
                         settings.stats_visibility === v
                           ? "border-accent bg-accent/10 text-white"
-                          : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
+                          : "border-slate-600 bg-surface text-slate-400"
                       )}
                     >
                       {v === "global" ? "Everyone" : "Per User"}
@@ -530,8 +530,8 @@ export default function AdminPage() {
                         isLastAdmin
                           ? "border-slate-700 text-slate-600 cursor-not-allowed"
                           : user.role === "admin"
-                            ? "border-slate-600 text-slate-400 hover:border-danger hover:text-danger"
-                            : "border-slate-600 text-slate-400 hover:border-success hover:text-success",
+                            ? "border-slate-600 text-slate-400"
+                            : "border-slate-600 text-slate-400",
                         roleChanging === user.id && "opacity-50 cursor-not-allowed"
                       )}
                     >

@@ -168,7 +168,7 @@ function NewGameForm() {
       <header className="flex items-center gap-3 px-5 pt-10 pb-6">
         <button
           onClick={() => router.back()}
-          className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+          className="p-2 rounded-xl text-slate-400 transition-colors"
         >
           <ArrowLeft size={22} />
         </button>
@@ -191,7 +191,7 @@ function NewGameForm() {
                   "flex flex-col items-center gap-1 px-2 py-2.5 rounded-2xl border transition-all active:scale-[0.97]",
                   selectedGameId === game.id
                     ? "border-accent bg-accent/10"
-                    : "border-slate-700/50 bg-surface-card hover:border-slate-600"
+                    : "border-slate-700/50 bg-surface-card"
                 )}
               >
                 <span className="text-slate-300"><GameIcon gameId={game.id} size={18} strokeWidth={1.5} fallback={game.emoji} /></span>
@@ -251,7 +251,7 @@ function NewGameForm() {
                 {playerNames.length > selectedGame.minPlayers && (
                   <button
                     onClick={() => removePlayer(playerNames.length - 1)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-slate-700 hover:border-danger text-slate-500 hover:text-danger transition-colors text-sm"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-slate-700 text-slate-500 transition-colors text-sm"
                   >
                     <Trash2 size={14} />
                     Remove Player
@@ -278,7 +278,7 @@ function NewGameForm() {
                       {playerNames.length > selectedGame.minPlayers && (
                         <button
                           onClick={() => removePlayer(playerNames.length - 1)}
-                          className="flex-1 flex items-center justify-center rounded-xl border border-dashed border-slate-700 hover:border-danger text-slate-500 hover:text-danger transition-colors"
+                          className="flex-1 flex items-center justify-center rounded-xl border border-dashed border-slate-700 text-slate-500 transition-colors"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -286,7 +286,7 @@ function NewGameForm() {
                       {playerNames.length < selectedGame.maxPlayers && (
                         <button
                           onClick={addPlayer}
-                          className="flex-1 flex items-center justify-center rounded-xl border border-dashed border-slate-600 hover:border-accent text-slate-500 hover:text-accent transition-colors"
+                          className="flex-1 flex items-center justify-center rounded-xl border border-dashed border-slate-600 text-slate-500 transition-colors"
                         >
                           <Plus size={18} />
                         </button>
@@ -302,7 +302,7 @@ function NewGameForm() {
                     {playerNames.length > selectedGame.minPlayers && (
                       <button
                         onClick={() => removePlayer(playerNames.length - 1)}
-                        className="flex-1 flex items-center justify-center rounded-xl border border-dashed border-slate-700 hover:border-danger text-slate-500 hover:text-danger transition-colors py-3"
+                        className="flex-1 flex items-center justify-center rounded-xl border border-dashed border-slate-700 text-slate-500 transition-colors py-3"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -310,7 +310,7 @@ function NewGameForm() {
                     {playerNames.length < selectedGame.maxPlayers && (
                       <button
                         onClick={addPlayer}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-slate-600 hover:border-accent text-slate-500 hover:text-accent transition-colors text-sm"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-slate-600 text-slate-500 transition-colors text-sm"
                       >
                         <Plus size={16} />
                         Add Player
@@ -334,7 +334,7 @@ function NewGameForm() {
                     {playerNames.length > selectedGame.minPlayers && (
                       <button
                         onClick={() => removePlayer(idx)}
-                        className="p-3 rounded-xl bg-surface-card hover:bg-danger/10 text-slate-500 hover:text-danger transition-colors"
+                        className="p-3 rounded-xl bg-surface-card text-slate-500 transition-colors"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -344,7 +344,7 @@ function NewGameForm() {
                 {playerNames.length < selectedGame.maxPlayers && (
                   <button
                     onClick={addPlayer}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-slate-600 hover:border-accent text-slate-500 hover:text-accent transition-colors text-sm"
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-slate-600 text-slate-500 transition-colors text-sm"
                   >
                     <Plus size={16} />
                     Add Player
@@ -413,7 +413,7 @@ function NewGameForm() {
                               "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-colors shrink-0",
                               isEnabled
                                 ? "border-accent bg-accent/10 text-accent"
-                                : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
+                                : "border-slate-600 bg-surface text-slate-400"
                             )}
                           >
                             <div className={cn(

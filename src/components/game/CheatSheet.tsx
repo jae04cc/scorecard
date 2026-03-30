@@ -18,7 +18,7 @@ export function CheatSheet({ sections, gameName }: CheatSheetProps) {
     <div className="rounded-2xl border border-slate-700/50 bg-surface-card overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-surface-elevated transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors"
       >
         <div className="flex items-center gap-2 text-slate-300">
           <BookOpen size={16} />

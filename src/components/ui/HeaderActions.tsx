@@ -16,14 +16,14 @@ export function HeaderActions() {
       {isAdmin && (
         <Link
           href="/admin"
-          className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+          className="p-2 rounded-xl text-slate-400 transition-colors"
         >
           <Settings size={20} />
         </Link>
       )}
       <Link
         href="/"
-        className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+        className="p-2 rounded-xl text-slate-400 transition-colors"
       >
         <Home size={20} />
       </Link>

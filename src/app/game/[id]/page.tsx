@@ -297,7 +297,7 @@ export default function GamePage() {
         <div className="flex items-center gap-2 mb-3">
           <button
             onClick={() => router.push("/")}
-            className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl text-slate-400 transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
@@ -325,7 +325,7 @@ export default function GamePage() {
                 setLocalSettings({ ...settings });
                 setSettingsOpen(true);
               }}
-              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl text-slate-400 transition-colors"
             >
               <Settings2 size={18} />
             </button>
@@ -542,7 +542,7 @@ export default function GamePage() {
                       "w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all text-left",
                       endWinnerId === s.playerId
                         ? "border-accent bg-accent/10 text-white"
-                        : "border-slate-700 bg-surface-elevated text-slate-300 hover:border-slate-500"
+                        : "border-slate-700 bg-surface-elevated text-slate-300"
                     )}
                   >
                     <Crown
@@ -622,7 +622,7 @@ export default function GamePage() {
                           "flex-1 py-2 rounded-xl text-sm font-medium border transition-colors",
                           currentVal === v
                             ? "bg-accent text-white border-accent"
-                            : "bg-surface-elevated border-slate-600 text-slate-300 hover:border-accent"
+                            : "bg-surface-elevated border-slate-600 text-slate-300"
                         )}
                       >
                         {v ? "On" : "Off"}
@@ -640,7 +640,7 @@ export default function GamePage() {
                           "px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors",
                           currentVal === opt.value
                             ? "bg-accent text-white border-accent"
-                            : "bg-surface-elevated border-slate-600 text-slate-300 hover:border-accent"
+                            : "bg-surface-elevated border-slate-600 text-slate-300"
                         )}
                       >
                         {opt.label}
