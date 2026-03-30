@@ -6,7 +6,7 @@ import { ArrowLeft, Trophy, Clock, Trash2, Unlink, Download, Search, X } from "l
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
-import { formatDateTime, formatDuration } from "@/lib/utils";
+import { formatDateTimeRange, formatDuration } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { HeaderActions } from "@/components/ui/HeaderActions";
 
@@ -276,8 +276,7 @@ export default function HistoryPage() {
                             <p className="text-xs text-slate-500 mt-0.5">{s.ownerName}</p>
                           )}
                           <p className="text-[10px] text-slate-600 whitespace-nowrap overflow-hidden text-ellipsis">
-                            {formatDateTime(s.createdAt)}
-                            {s.completedAt && <> → {formatDateTime(s.completedAt)}</>}
+                            {formatDateTimeRange(s.createdAt, s.completedAt)}
                           </p>
                         </div>
                         <button
