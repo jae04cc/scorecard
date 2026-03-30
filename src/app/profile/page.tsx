@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, User, LogIn, LogOut, Shield, KeyRound, ChevronDown } from "lucide-react";
+import { HeaderActions } from "@/components/ui/HeaderActions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -48,6 +49,7 @@ export default function ProfilePage() {
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-2xl font-black text-white">Profile</h1>
+        <HeaderActions />
       </header>
 
       <main className="flex-1 px-5 pb-10">

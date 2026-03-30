@@ -10,6 +10,7 @@ import {
   BookOpen,
   Trash2,
 } from "lucide-react";
+import { HeaderActions } from "@/components/ui/HeaderActions";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
@@ -106,6 +107,7 @@ export default function GamePage() {
 
   const winCondition = game.winCondition;
   const targetScore =
+    (game.targetScoreSettingKey ? (settings[game.targetScoreSettingKey] as number | undefined) : undefined) ??
     (settings["targetScore"] as number | undefined) ??
     (winCondition.type === "target" || winCondition.type === "highest" || winCondition.type === "lowest"
       ? (winCondition as { targetScore?: number }).targetScore
@@ -261,7 +263,7 @@ export default function GamePage() {
           >
             <ArrowLeft size={20} />
           </button>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 overflow-hidden">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-base bg-slate-200/30 shrink-0">{game.emoji}</div>
               <h1 className="text-xl font-black text-white">{game.name}</h1>
@@ -273,6 +275,7 @@ export default function GamePage() {
               Started {formatDateTime(session.createdAt)}
             </p>
           </div>
+          <HeaderActions />
         </div>
 
         {/* Standings bar */}

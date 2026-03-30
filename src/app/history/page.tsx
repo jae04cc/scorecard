@@ -7,6 +7,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { formatDateTime, formatDuration } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { HeaderActions } from "@/components/ui/HeaderActions";
 
 interface GameInfo {
   id: string;
@@ -24,14 +25,22 @@ interface SessionSummary {
   players: Array<{ name: string; active: boolean }>;
 }
 
+interface UserOption {
+  id: string;
+  name: string | null;
+  email: string | null;
+}
+
 export default function HistoryPage() {
   const router = useRouter();
   const { data: authSession } = useSession();
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [games, setGames] = useState<GameInfo[]>([]);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
 
-  const isAdmin = !authSession || authSession.user.role === "admin";
+  const isAdmin = authSession?.user.role === "admin";
 
   const refresh = async () => {
     const [sessionsRes, gamesRes] = await Promise.all([
@@ -42,7 +51,24 @@ export default function HistoryPage() {
     setGames(await gamesRes.json());
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    if (isAdmin) {
+      fetch("/api/admin/users").then((r) => r.json()).then(setUsers);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
+
+  const handleAssign = async (sessionId: string, userId: string | null) => {
+    setAssigningId(sessionId);
+    await fetch(`/api/sessions/${sessionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    await refresh();
+    setAssigningId(null);
+  };
 
   const gameMap = new Map(games.map((g) => [g.id, g]));
 
@@ -69,6 +95,7 @@ export default function HistoryPage() {
             <ArrowLeft size={22} />
           </button>
           <h1 className="text-2xl font-black text-white">Game History</h1>
+          <HeaderActions />
         </div>
 
         {/* Filter tabs */}
@@ -106,8 +133,8 @@ export default function HistoryPage() {
               const isOrphaned = s.userId === null;
 
               return (
+                <div key={s.id}>
                 <Link
-                  key={s.id}
                   href={s.status === "active" ? `/game/${s.id}` : `/history/${s.id}`}
                   className="block"
                 >
@@ -159,6 +186,30 @@ export default function HistoryPage() {
                     </CardBody>
                   </Card>
                 </Link>
+                {isAdmin && isOrphaned && (
+                  <div className="mt-1 px-1 flex items-center gap-2">
+                    <Unlink size={11} className="text-slate-600 shrink-0" />
+                    <span className="text-xs text-slate-600">Assign to:</span>
+                    <select
+                      className="flex-1 text-xs bg-surface-card border border-slate-700 rounded-lg px-2 py-1 text-slate-300 focus:outline-none focus:border-accent disabled:opacity-50"
+                      defaultValue=""
+                      disabled={assigningId === s.id}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val) handleAssign(s.id, val);
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="" disabled>Select user…</option>
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name ?? u.email ?? u.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                </div>
               );
             })}
           </div>

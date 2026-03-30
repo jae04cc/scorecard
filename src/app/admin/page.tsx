@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Shield, Users, Settings, Save, Check, ChevronDown, Globe, AlertCircle } from "lucide-react";
+import { ArrowLeft, Shield, Users, Settings, Save, Check, ChevronDown, Globe, AlertCircle, Home } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -204,6 +204,14 @@ export default function AdminPage() {
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-2xl font-black text-white">Admin</h1>
+        <div className="ml-auto">
+          <button
+            onClick={() => router.push("/")}
+            className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+          >
+            <Home size={20} />
+          </button>
+        </div>
       </header>
 
       {/* Tabs */}

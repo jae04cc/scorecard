@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Trash2, ArrowLeft, ChevronDown } from "lucide-react";
+import { HeaderActions } from "@/components/ui/HeaderActions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { cn, toProperCase, liveProperCase, findDuplicateName } from "@/lib/utils";
@@ -200,6 +201,7 @@ function NewGameForm() {
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-2xl font-black text-white">New Game</h1>
+        <HeaderActions />
       </header>
 
       <main className="flex-1 px-5 pb-10 space-y-6">
