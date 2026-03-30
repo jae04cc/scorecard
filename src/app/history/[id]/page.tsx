@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, Play, Share2, ChevronDown, ChevronUp } from "lucide-react";
 import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { HeaderActions } from "@/components/ui/HeaderActions";
 import { Button } from "@/components/ui/Button";
@@ -41,6 +41,8 @@ export default function GameHistoryPage() {
 
   const [session, setSession] = useState<SessionData | null>(null);
   const [game, setGame] = useState<GameDefinition | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     fetch(`/api/sessions/${sessionId}`)
@@ -60,6 +62,64 @@ export default function GameHistoryPage() {
     router.push(`/game/${sessionId}`);
   };
 
+  const handlePlayAgain = async () => {
+    if (!session || !game) return;
+    const activePlayers = session.players.filter((p) => p.active);
+    const res = await fetch("/api/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        gameId: session.gameId,
+        playerNames: activePlayers.map((p) => p.name),
+        settings: JSON.parse(session.settings ?? "{}"),
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      router.push(`/game/${data.id}`);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!session || !game) return;
+    setSharing(true);
+    try {
+      const activePlayers = session.players.filter((p) => p.active);
+      const allScores = session.rounds.flatMap((r) =>
+        r.scores.map((s) => ({ ...s, roundNumber: r.roundNumber }))
+      );
+      const parsedSettings = JSON.parse(session.settings ?? "{}");
+      let stndgs = computeStandings(game, activePlayers, allScores, parsedSettings);
+      const manualWinnerId = parsedSettings.manualWinnerId as string | undefined;
+      if (manualWinnerId) {
+        stndgs = stndgs.map((s) => ({
+          ...s,
+          isWinning: s.playerId === manualWinnerId,
+          rank: s.playerId === manualWinnerId ? 1 : s.rank === 1 ? 2 : s.rank,
+        }));
+      }
+      const lines = [
+        `${game.name} — ${new Date(session.createdAt).toLocaleDateString()}`,
+        "",
+        ...stndgs.map((s) => {
+          const medal = s.rank === 1 ? "🥇" : s.rank === 2 ? "🥈" : s.rank === 3 ? "🥉" : `#${s.rank}`;
+          return `${medal} ${s.playerName}: ${s.total}`;
+        }),
+        "",
+        `${session.rounds.length} ${game.roundName.toLowerCase()}${session.rounds.length !== 1 ? "s" : ""}`,
+      ];
+      const text = lines.join("\n");
+      if (navigator.share) {
+        await navigator.share({ title: `${game.name} Results`, text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        alert("Results copied to clipboard!");
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
+
   if (!session || !game) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -73,7 +133,17 @@ export default function GameHistoryPage() {
   const allScores = session.rounds.flatMap((r) =>
     r.scores.map((s) => ({ ...s, roundNumber: r.roundNumber }))
   );
-  const standings = computeStandings(game, activePlayers, allScores, settings);
+  let standings = computeStandings(game, activePlayers, allScores, settings);
+
+  // Apply manual winner override if set
+  const manualWinnerId = settings.manualWinnerId as string | undefined;
+  if (manualWinnerId) {
+    standings = standings.map((s) => ({
+      ...s,
+      isWinning: s.playerId === manualWinnerId,
+      rank: s.playerId === manualWinnerId ? 1 : s.rank === 1 ? 2 : s.rank,
+    }));
+  }
 
   const winCondition = game.winCondition;
   const targetScore =
@@ -85,10 +155,15 @@ export default function GameHistoryPage() {
 
   const winners = standings.filter((s) => s.isWinning);
   const winningNames = winners.map((s) => s.playerName).join(" & ");
-  // For rankings: deduplicate by team, show player names
   const rankingRows = standings.filter(
     (s, i, arr) => !s.team || arr.findIndex((a) => a.team === s.team) === i
   );
+
+  // Non-default settings to display
+  const nonDefaultSettings = game.settings.filter((gs) => {
+    const current = settings[gs.key];
+    return current !== undefined && current !== gs.defaultValue;
+  });
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -129,6 +204,7 @@ export default function GameHistoryPage() {
             <div className="text-sm text-slate-400">
               {session.rounds.length} {game.roundName.toLowerCase()}
               {session.rounds.length !== 1 ? "s" : ""}
+              {manualWinnerId && <span className="text-slate-500 text-xs ml-1">(early end)</span>}
             </div>
           </div>
         )}
@@ -153,16 +229,46 @@ export default function GameHistoryPage() {
                   {s.rank === 1 ? "🥇" : s.rank === 2 ? "🥈" : s.rank === 3 ? "🥉" : `#${s.rank}`}
                 </span>
                 <span className="flex-1 font-medium text-slate-200">{displayName}</span>
-                <span className={cn(
-                  "font-mono font-bold",
-                  s.isWinning ? "text-success" : "text-slate-200"
-                )}>
+                <span className={cn("font-mono font-bold", s.isWinning ? "text-success" : "text-slate-200")}>
                   {s.total}
                 </span>
               </div>
             );
           })}
         </div>
+
+        {/* Settings used (non-default only, collapsible) */}
+        {nonDefaultSettings.length > 0 && (
+          <div className="bg-surface-card rounded-2xl border border-slate-700/50 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowSettings((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Settings Used</span>
+              {showSettings ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+            </button>
+            {showSettings && (
+              <div className="px-4 pb-3 space-y-1.5 border-t border-slate-700/50">
+                {nonDefaultSettings.map((gs) => {
+                  const val = settings[gs.key];
+                  let displayVal = String(val);
+                  if (gs.type === "boolean") displayVal = val ? "On" : "Off";
+                  if (gs.options) {
+                    const opt = gs.options.find((o) => o.value === val);
+                    if (opt) displayVal = opt.label;
+                  }
+                  return (
+                    <div key={gs.key} className="flex items-center justify-between py-1">
+                      <span className="text-sm text-slate-400">{gs.label}</span>
+                      <span className="text-sm font-medium text-slate-200">{displayVal}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Full score table */}
         {session.rounds.length > 0 && (
@@ -178,18 +284,24 @@ export default function GameHistoryPage() {
       </main>
 
       <footer className="px-4 pt-3 border-t border-slate-700/50" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}>
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={() => router.push("/history")} className="flex-1">
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => router.push("/history")} size="sm" className="shrink-0">
+            <ArrowLeft size={14} />
             Back
           </Button>
           {session.status === "completed" && (
-            <Button variant="ghost" onClick={handleReactivate}>
-              <RotateCcw size={16} />
+            <Button variant="ghost" size="sm" onClick={handleReactivate} className="shrink-0">
+              <RotateCcw size={14} />
               Reopen
             </Button>
           )}
-          <Button onClick={() => router.push("/new")} className="flex-1">
-            New Game
+          <Button variant="ghost" size="sm" onClick={handleShare} loading={sharing} className="shrink-0">
+            <Share2 size={14} />
+            Share
+          </Button>
+          <Button onClick={handlePlayAgain} size="sm" className="flex-1">
+            <Play size={14} />
+            Play Again
           </Button>
         </div>
       </footer>

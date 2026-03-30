@@ -7,8 +7,10 @@ import {
   UserPlus,
   RotateCcw,
   CheckCircle,
-  BookOpen,
   Trash2,
+  Undo2,
+  Settings2,
+  Crown,
 } from "lucide-react";
 import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { HeaderActions } from "@/components/ui/HeaderActions";
@@ -16,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { SettingPicker } from "@/components/ui/SettingPicker";
 import { ScoreTable } from "@/components/game/ScoreTable";
 import { StandingsBar } from "@/components/game/StandingsBar";
 import { RoundEntryModal } from "@/components/game/RoundEntryModal";
@@ -45,14 +48,18 @@ interface SessionData {
   }>;
 }
 
+function haptic() {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(10);
+  }
+}
+
 export default function GamePage() {
   const params = useParams();
   const router = useRouter();
   const sessionId = params.id as string;
 
   const [session, setSession] = useState<SessionData | null>(null);
-  // Game definitions are imported directly (pure TS, no Node deps) so their
-  // methods (computeStandings, validateRound, etc.) are available client-side.
   const [game, setGame] = useState<GameDefinition | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -62,8 +69,10 @@ export default function GamePage() {
   const [addPlayerOpen, setAddPlayerOpen] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [endGameOpen, setEndGameOpen] = useState(false);
+  const [endWinnerId, setEndWinnerId] = useState<string | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
-  const [cheatSheetOpen, setCheatSheetOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [localSettings, setLocalSettings] = useState<Record<string, unknown>>({});
 
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -82,7 +91,6 @@ export default function GamePage() {
       }
       const sessionData: SessionData = await sessionRes.json();
       setSession(sessionData);
-      // Import game definition directly — preserves methods (validateRound, computeStandings, etc.)
       setGame(getGame(sessionData.gameId) ?? null);
       setLoading(false);
     };
@@ -100,7 +108,6 @@ export default function GamePage() {
   const settings = JSON.parse(session.settings ?? "{}");
   const activePlayers = session.players.filter((p) => p.active);
 
-  // Flatten all scores for standings computation
   const allScores = session.rounds.flatMap((r) =>
     r.scores.map((s) => ({ ...s, roundNumber: r.roundNumber }))
   );
@@ -114,7 +121,6 @@ export default function GamePage() {
       ? (winCondition as { targetScore?: number }).targetScore
       : undefined);
 
-  // Check if any player has hit the win condition
   const hasWinner = standings.some((s) => s.isWinning);
 
   // --- Handlers ---
@@ -127,11 +133,13 @@ export default function GamePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ entries }),
     });
-    if (!res.ok) {
+    // 202 means the SW queued it for offline sync — treat as success
+    if (!res.ok && res.status !== 202) {
       const data = await res.json();
       throw new Error(data.error ?? "Failed to save round");
     }
-    await refresh();
+    haptic();
+    if (res.status !== 202) await refresh();
   };
 
   const handleEditRound = (roundId: string) => {
@@ -142,6 +150,13 @@ export default function GamePage() {
   const handleDeleteRound = async (roundId: string) => {
     if (!confirm("Delete this round?")) return;
     await fetch(`/api/sessions/${sessionId}/rounds/${roundId}`, { method: "DELETE" });
+    await refresh();
+  };
+
+  const handleUndoRound = async () => {
+    if (session.rounds.length === 0) return;
+    const lastRound = session.rounds[session.rounds.length - 1];
+    await fetch(`/api/sessions/${sessionId}/rounds/${lastRound.id}`, { method: "DELETE" });
     await refresh();
   };
 
@@ -178,13 +193,36 @@ export default function GamePage() {
     await refresh();
   };
 
-  const handleEndGame = async () => {
+  const handleSaveSettings = async () => {
     setActionLoading(true);
     try {
+      const merged = { ...settings, ...localSettings };
       await fetch(`/api/sessions/${sessionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "completed", completedAt: Date.now() }),
+        body: JSON.stringify({ settings: JSON.stringify(merged) }),
+      });
+      setSettingsOpen(false);
+      await refresh();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEndGame = async () => {
+    setActionLoading(true);
+    try {
+      const updatedSettings = endWinnerId
+        ? JSON.stringify({ ...settings, manualWinnerId: endWinnerId })
+        : session.settings;
+      await fetch(`/api/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "completed",
+          completedAt: Date.now(),
+          settings: updatedSettings,
+        }),
       });
       setEndGameOpen(false);
       router.push(`/history/${sessionId}`);
@@ -226,7 +264,6 @@ export default function GamePage() {
   const handleReset = async () => {
     setActionLoading(true);
     try {
-      // Delete all rounds (cascades to scores)
       for (const r of session.rounds) {
         await fetch(`/api/sessions/${sessionId}/rounds/${r.id}`, { method: "DELETE" });
       }
@@ -281,6 +318,18 @@ export default function GamePage() {
               Started {formatDateTime(session.createdAt)}
             </p>
           </div>
+          {/* Settings button — only when active and game has settings */}
+          {session.status === "active" && game.settings.length > 0 && (
+            <button
+              onClick={() => {
+                setLocalSettings({ ...settings });
+                setSettingsOpen(true);
+              }}
+              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+            >
+              <Settings2 size={18} />
+            </button>
+          )}
           <HeaderActions />
         </div>
 
@@ -309,7 +358,7 @@ export default function GamePage() {
           );
         })()}
 
-        {/* Score table — bubble headers always shown */}
+        {/* Score table */}
         {(() => {
           const countSweeps = (settings["countSweeps"] as boolean) ?? false;
           const sweepPoints = (settings["sweepPoints"] as number) ?? 1;
@@ -328,7 +377,6 @@ export default function GamePage() {
 
           const lowestWins = winCondition.type === "lowest" ||
             (winCondition.type === "target" && winCondition.direction === "until-exceeded");
-          // Hide bag count when bag penalty is explicitly disabled (bagPenaltyAt = 0)
           const bagPenaltyAt = settings["bagPenaltyAt"] as number | undefined;
           const showBags = bagPenaltyAt === undefined ? true : bagPenaltyAt > 0;
           return (
@@ -348,7 +396,7 @@ export default function GamePage() {
           );
         })()}
 
-        {/* Cheat sheet — use dynamic version if the game provides one */}
+        {/* Cheat sheet */}
         {(() => {
           const sections = game.getCheatSheet
             ? game.getCheatSheet(settings, { playerCount: activePlayers.length })
@@ -364,30 +412,13 @@ export default function GamePage() {
         <footer className="px-4 pt-3 pb-8 border-t border-slate-700/50" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}>
           {hasWinner ? (
             <div className="flex gap-2">
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={handleDelete}
-                loading={actionLoading}
-                className="shrink-0"
-              >
+              <Button variant="danger" size="sm" onClick={handleDelete} loading={actionLoading} className="shrink-0">
                 Delete
               </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => handleSave("/new")}
-                loading={actionLoading}
-                className="shrink-0"
-              >
+              <Button variant="secondary" size="sm" onClick={() => handleSave("/new")} loading={actionLoading} className="shrink-0">
                 New Game
               </Button>
-              <Button
-                size="md"
-                className="flex-1"
-                onClick={() => handleSave("/")}
-                loading={actionLoading}
-              >
+              <Button size="md" className="flex-1" onClick={() => handleSave("/")} loading={actionLoading}>
                 <CheckCircle size={16} />
                 Save
               </Button>
@@ -399,13 +430,27 @@ export default function GamePage() {
                 size="sm"
                 onClick={() => setResetOpen(true)}
                 className="shrink-0"
+                title="Reset all scores"
               >
                 <RotateCcw size={16} />
               </Button>
               <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleUndoRound}
+                disabled={session.rounds.length === 0}
+                className="shrink-0"
+                title={`Undo last ${game.roundName.toLowerCase()}`}
+              >
+                <Undo2 size={16} />
+              </Button>
+              <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => setEndGameOpen(true)}
+                onClick={() => {
+                  setEndWinnerId(null);
+                  setEndGameOpen(true);
+                }}
                 className="shrink-0"
               >
                 <CheckCircle size={16} />
@@ -453,6 +498,7 @@ export default function GamePage() {
                   }
                 );
                 if (!res.ok) throw new Error((await res.json()).error);
+                haptic();
                 await refresh();
               }
             : handleAddRound
@@ -472,19 +518,44 @@ export default function GamePage() {
           />
           {actionError && <p className="text-danger text-sm">{actionError}</p>}
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setAddPlayerOpen(false)} className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={handleAddPlayer} loading={actionLoading} className="flex-1">
-              Add Player
-            </Button>
+            <Button variant="secondary" onClick={() => setAddPlayerOpen(false)} className="flex-1">Cancel</Button>
+            <Button onClick={handleAddPlayer} loading={actionLoading} className="flex-1">Add Player</Button>
           </div>
         </div>
       </Modal>
 
-      {/* End game confirmation */}
-      <Modal open={endGameOpen} onClose={() => setEndGameOpen(false)} title="End Game?">
-        <div className="space-y-3">
+      {/* End game — with optional winner override */}
+      <Modal open={endGameOpen} onClose={() => setEndGameOpen(false)} title="End Game">
+        <div className="space-y-4">
+          {!hasWinner && standings.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                Mark Winner <span className="text-slate-600 normal-case font-normal">(optional)</span>
+              </p>
+              <div className="space-y-1">
+                {standings.map((s) => (
+                  <button
+                    key={s.playerId}
+                    type="button"
+                    onClick={() => setEndWinnerId(endWinnerId === s.playerId ? null : s.playerId)}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all text-left",
+                      endWinnerId === s.playerId
+                        ? "border-accent bg-accent/10 text-white"
+                        : "border-slate-700 bg-surface-elevated text-slate-300 hover:border-slate-500"
+                    )}
+                  >
+                    <Crown
+                      size={14}
+                      className={endWinnerId === s.playerId ? "text-accent" : "text-slate-600"}
+                    />
+                    <span className="flex-1 text-sm font-medium">{s.team ? `${s.team} (${s.playerName})` : s.playerName}</span>
+                    <span className="font-mono text-xs text-slate-500">{s.total}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <Button variant="secondary" onClick={() => setEndGameOpen(false)} className="w-full">
             Keep Playing
           </Button>
@@ -492,7 +563,7 @@ export default function GamePage() {
             <Button variant="danger" onClick={handleDelete} loading={actionLoading} className="flex-1">
               Discard
             </Button>
-            <Button onClick={() => handleSave("/")} loading={actionLoading} className="flex-1">
+            <Button onClick={handleEndGame} loading={actionLoading} className="flex-1">
               <CheckCircle size={16} />
               Save
             </Button>
@@ -507,12 +578,82 @@ export default function GamePage() {
             This will permanently delete all rounds and scores for this game. Players will remain.
           </p>
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setResetOpen(false)} className="flex-1">
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={handleReset} loading={actionLoading} className="flex-1">
-              Reset Scores
-            </Button>
+            <Button variant="secondary" onClick={() => setResetOpen(false)} className="flex-1">Cancel</Button>
+            <Button variant="danger" onClick={handleReset} loading={actionLoading} className="flex-1">Reset Scores</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Settings edit modal */}
+      <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Game Settings">
+        <div className="space-y-5">
+          {game.settings.map((s) => {
+            const showWhen = s.showWhen;
+            if (showWhen) {
+              const watchVal = localSettings[showWhen.setting] ?? settings[showWhen.setting];
+              if (watchVal !== showWhen.value) return null;
+            }
+            const currentVal = localSettings[s.key] ?? settings[s.key] ?? s.defaultValue;
+            return (
+              <div key={s.key} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-200">{s.label}</label>
+                  {s.description && (
+                    <span className="text-xs text-slate-500">{s.description}</span>
+                  )}
+                </div>
+                {s.type === "number" && s.min !== undefined && s.max !== undefined ? (
+                  <SettingPicker
+                    value={currentVal as number}
+                    onChange={(v) => setLocalSettings((prev) => ({ ...prev, [s.key]: v }))}
+                    min={s.min}
+                    max={s.max}
+                    minLabel={s.minLabel}
+                    homePosition={s.homePosition}
+                  />
+                ) : s.type === "boolean" ? (
+                  <div className="flex gap-2">
+                    {[true, false].map((v) => (
+                      <button
+                        key={String(v)}
+                        type="button"
+                        onClick={() => setLocalSettings((prev) => ({ ...prev, [s.key]: v }))}
+                        className={cn(
+                          "flex-1 py-2 rounded-xl text-sm font-medium border transition-colors",
+                          currentVal === v
+                            ? "bg-accent text-white border-accent"
+                            : "bg-surface-elevated border-slate-600 text-slate-300 hover:border-accent"
+                        )}
+                      >
+                        {v ? "On" : "Off"}
+                      </button>
+                    ))}
+                  </div>
+                ) : s.type === "select" && s.options ? (
+                  <div className="flex gap-2 flex-wrap">
+                    {s.options.map((opt) => (
+                      <button
+                        key={String(opt.value)}
+                        type="button"
+                        onClick={() => setLocalSettings((prev) => ({ ...prev, [s.key]: opt.value }))}
+                        className={cn(
+                          "px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors",
+                          currentVal === opt.value
+                            ? "bg-accent text-white border-accent"
+                            : "bg-surface-elevated border-slate-600 text-slate-300 hover:border-accent"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+          <div className="flex gap-3 pt-1">
+            <Button variant="secondary" onClick={() => setSettingsOpen(false)} className="flex-1">Cancel</Button>
+            <Button onClick={handleSaveSettings} loading={actionLoading} className="flex-1">Save Settings</Button>
           </div>
         </div>
       </Modal>

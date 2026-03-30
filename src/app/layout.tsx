@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/SessionProvider";
+import { InstallPrompt } from "@/components/ui/InstallPrompt";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,6 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto max-w-2xl min-h-screen flex flex-col">
             {children}
           </div>
+          <InstallPrompt />
+          <ServiceWorkerRegistration />
         </SessionProvider>
       </body>
     </html>
