@@ -38,7 +38,7 @@ export function SettingPicker({
             "shrink-0 min-w-[2.75rem] h-9 rounded-full text-xs font-semibold transition-colors px-2",
             n === value
               ? "bg-accent text-white"
-              : "bg-surface-elevated border border-slate-600 text-slate-300 hover:border-accent hover:text-white"
+              : "bg-surface-elevated border border-slate-600 text-slate-300"
           )}
         >
           {n === min && minLabel ? minLabel : n}

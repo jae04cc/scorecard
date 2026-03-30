@@ -14,11 +14,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed select-none";
 
     const variants = {
-      primary: "bg-accent hover:bg-accent-hover text-white shadow-lg shadow-accent/20",
-      secondary: "bg-surface-elevated hover:bg-slate-600 text-slate-100 border border-slate-600",
-      ghost: "bg-transparent hover:bg-surface-elevated text-slate-300 hover:text-white",
-      danger: "bg-danger/10 hover:bg-danger/20 text-danger border border-danger/30",
-      success: "bg-success/10 hover:bg-success/20 text-success border border-success/30",
+      primary: "bg-accent text-white shadow-lg shadow-accent/20",
+      secondary: "bg-surface-elevated text-slate-100 border border-slate-600",
+      ghost: "bg-transparent text-slate-300",
+      danger: "bg-danger/10 text-danger border border-danger/30",
+      success: "bg-success/10 text-success border border-success/30",
     };
 
     const sizes = {

@@ -96,7 +96,7 @@ export default function ProfilePage() {
       <header className="flex items-center gap-3 px-5 pt-10 pb-6">
         <button
           onClick={() => router.push("/")}
-          className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+          className="p-2 rounded-xl text-slate-400 transition-colors"
         >
           <ArrowLeft size={22} />
         </button>
@@ -149,7 +149,7 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       onClick={() => setEditingName(true)}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-xl border border-slate-600 text-xs text-slate-400 hover:border-slate-500 hover:text-slate-300 transition-colors"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-xl border border-slate-600 text-xs text-slate-400 transition-colors"
                     >
                       <Pencil size={11} />
                       Edit
@@ -237,7 +237,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => { setShowLocalForm((v) => !v); setLocalError(null); }}
-                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-slate-600 hover:text-slate-400 transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-slate-600 transition-colors"
               >
                 <KeyRound size={12} />
                 Local admin login

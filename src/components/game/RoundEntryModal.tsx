@@ -58,7 +58,7 @@ function NumberPicker({
     scrollRef.current?.scrollBy({ left: dir * itemSize * 3, behavior: "smooth" });
   };
 
-  const arrowClass = "shrink-0 w-7 h-12 flex items-center justify-center text-xl text-slate-500 hover:text-white transition-colors rounded-lg hover:bg-surface select-none";
+  const arrowClass = "shrink-0 w-7 h-12 flex items-center justify-center text-xl text-slate-500 transition-colors rounded-lg select-none";
 
   return (
     <div className="flex items-center gap-0.5">
@@ -80,7 +80,7 @@ function NumberPicker({
               "shrink-0 w-12 h-12 rounded-full text-lg font-mono font-bold transition-colors",
               n === value
                 ? "bg-accent text-white"
-                : "bg-surface border border-slate-600 text-slate-300 hover:border-accent hover:text-white",
+                : "bg-surface border border-slate-600 text-slate-300",
               disabled && "opacity-40 cursor-not-allowed"
             )}
           >
@@ -374,7 +374,7 @@ export function RoundEntryModal({
                       "flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl border transition-colors shrink-0",
                       isChecked
                         ? "border-accent bg-accent/10 text-white"
-                        : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
+                        : "border-slate-600 bg-surface text-slate-400"
                     )}
                   >
                     <div className={cn(
@@ -480,7 +480,7 @@ export function RoundEntryModal({
                                 "flex flex-col items-center gap-1.5 px-2 py-2.5 rounded-xl border transition-colors",
                                 currentValues[field.key] === 1
                                   ? "border-accent bg-accent/10 text-white"
-                                  : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
+                                  : "border-slate-600 bg-surface text-slate-400"
                               )}
                             >
                               <div className={cn(
@@ -578,7 +578,7 @@ export function RoundEntryModal({
                         "flex-1 py-2.5 px-3 rounded-xl border text-sm font-semibold transition-colors",
                         isSelected
                           ? "border-accent bg-accent/10 text-white"
-                          : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
+                          : "border-slate-600 bg-surface text-slate-400"
                       )}
                     >
                       {getTargetLabel(target)}
@@ -652,7 +652,7 @@ export function RoundEntryModal({
                       "w-9 h-9 rounded-lg border-2 flex items-center justify-center text-base font-bold font-mono transition-colors shrink-0",
                       isNeg
                         ? "border-accent bg-accent/10 text-accent"
-                        : "border-slate-600 bg-surface text-slate-400 hover:border-slate-500"
+                        : "border-slate-600 bg-surface text-slate-400"
                     )}
                   >
                     −

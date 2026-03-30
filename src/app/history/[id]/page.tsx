@@ -98,12 +98,23 @@ export default function GameHistoryPage() {
           rank: s.playerId === manualWinnerId ? 1 : s.rank === 1 ? 2 : s.rank,
         }));
       }
+      // For team games deduplicate by team, show all players in that team
+      const seen = new Set<string>();
+      const shareRows = stndgs.filter((s) => {
+        const key = s.team ?? s.playerId;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       const lines = [
         `${game.name} — ${new Date(session.createdAt).toLocaleDateString()}`,
         "",
-        ...stndgs.map((s) => {
+        ...shareRows.map((s) => {
           const medal = s.rank === 1 ? "🥇" : s.rank === 2 ? "🥈" : s.rank === 3 ? "🥉" : `#${s.rank}`;
-          return `${medal} ${s.playerName}: ${s.total}`;
+          const displayName = s.team
+            ? `${s.team} (${stndgs.filter((m) => m.team === s.team).map((m) => m.playerName).join(" & ")})`
+            : s.playerName;
+          return `${medal} ${displayName}: ${s.total}`;
         }),
         "",
         `${session.rounds.length} ${game.roundName.toLowerCase()}${session.rounds.length !== 1 ? "s" : ""}`,
@@ -171,7 +182,7 @@ export default function GameHistoryPage() {
         <div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => router.push("/history")}
-            className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl text-slate-400 transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
@@ -188,9 +199,9 @@ export default function GameHistoryPage() {
                 {session.status}
               </Badge>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
               {formatDateTime(session.createdAt)}
-              {session.completedAt && ` — ended ${formatDateTime(session.completedAt)}`}
+              {session.completedAt && <> → {formatDateTime(session.completedAt)}</>}
             </p>
           </div>
           <HeaderActions />
@@ -301,7 +312,7 @@ export default function GameHistoryPage() {
           </Button>
           <Button onClick={handlePlayAgain} size="sm" className="flex-1">
             <Play size={14} />
-            Play Again
+            Again
           </Button>
         </div>
       </footer>

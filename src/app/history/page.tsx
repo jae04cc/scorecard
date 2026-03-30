@@ -134,7 +134,7 @@ export default function HistoryPage() {
         <div className="flex items-center gap-3 mb-4">
           <button
             onClick={() => router.push("/")}
-            className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl text-slate-400 transition-colors"
           >
             <ArrowLeft size={22} />
           </button>
@@ -143,14 +143,14 @@ export default function HistoryPage() {
             <button
               onClick={() => setShowSearch((v) => !v)}
               title="Search"
-              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl text-slate-400 transition-colors"
             >
               <Search size={18} />
             </button>
             <button
               onClick={handleExportCsv}
               title="Export CSV"
-              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl text-slate-400 transition-colors"
             >
               <Download size={18} />
             </button>
@@ -167,7 +167,7 @@ export default function HistoryPage() {
               className={`flex-1 py-1.5 rounded-lg text-sm font-medium capitalize transition-all ${
                 filter === f
                   ? "bg-accent text-white"
-                  : "text-slate-400 hover:text-slate-200"
+                  : "text-slate-400"
               }`}
             >
               {f}
@@ -188,7 +188,7 @@ export default function HistoryPage() {
                 className="w-full bg-surface-card border border-slate-700 rounded-xl pl-8 pr-8 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-accent"
               />
               {search && (
-                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
                   <X size={12} />
                 </button>
               )}
@@ -234,7 +234,7 @@ export default function HistoryPage() {
                   href={s.status === "active" ? `/game/${s.id}` : `/history/${s.id}`}
                   className="block"
                 >
-                  <Card className={`hover:border-slate-600 transition-all active:scale-[0.99] cursor-pointer group ${s.status === "active" ? "border-success/40" : ""}`}>
+                  <Card className={`transition-all active:scale-[0.99] cursor-pointer ${s.status === "active" ? "border-success/40" : ""}`}>
                     <CardBody>
                       <div className="flex items-center gap-3">
                         <div
@@ -275,14 +275,14 @@ export default function HistoryPage() {
                           {authEnabled && isAdmin && s.ownerName && (
                             <p className="text-xs text-slate-500 mt-0.5">{s.ownerName}</p>
                           )}
-                          <p className="text-xs text-slate-600">
+                          <p className="text-[10px] text-slate-600 whitespace-nowrap overflow-hidden text-ellipsis">
                             {formatDateTime(s.createdAt)}
                             {s.completedAt && <> → {formatDateTime(s.completedAt)}</>}
                           </p>
                         </div>
                         <button
                           onClick={(e) => handleDelete(s.id, e)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg hover:bg-danger/10 text-slate-600 hover:text-danger"
+                          className="p-2 rounded-lg text-slate-700 active:text-danger shrink-0"
                         >
                           <Trash2 size={16} />
                         </button>

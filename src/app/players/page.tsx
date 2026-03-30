@@ -69,7 +69,7 @@ export default function PlayersPage() {
       <header className="flex items-center gap-3 px-5 pt-10 pb-6">
         <button
           onClick={() => router.push("/")}
-          className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+          className="p-2 rounded-xl text-slate-400 transition-colors"
         >
           <ArrowLeft size={22} />
         </button>
@@ -110,7 +110,7 @@ export default function PlayersPage() {
                 >
                   {/* Main row */}
                   <button
-                    className="w-full flex items-center px-4 py-3 hover:bg-surface-elevated transition-colors"
+                    className="w-full flex items-center px-4 py-3 transition-colors"
                     onClick={() => setExpanded(isExpanded ? null : player.name)}
                   >
                     <span className="w-6 text-sm">
@@ -142,7 +142,7 @@ export default function PlayersPage() {
                           className={`flex-1 py-2 text-xs font-semibold transition-colors ${
                             section === "games"
                               ? "text-accent border-b-2 border-accent"
-                              : "text-slate-500 hover:text-slate-300"
+                              : "text-slate-500"
                           }`}
                         >
                           By Game · {player.totalGames}
@@ -153,7 +153,7 @@ export default function PlayersPage() {
                             className={`flex-1 py-2 text-xs font-semibold transition-colors flex items-center justify-center gap-1 ${
                               section === "h2h"
                                 ? "text-accent border-b-2 border-accent"
-                                : "text-slate-500 hover:text-slate-300"
+                                : "text-slate-500"
                             }`}
                           >
                             <Swords size={11} />
