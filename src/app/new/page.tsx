@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Trash2, ArrowLeft, ChevronDown } from "lucide-react";
 import { HeaderActions } from "@/components/ui/HeaderActions";
 import { GameIcon } from "@/components/ui/GameIcon";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { SettingPicker } from "@/components/ui/SettingPicker";
 import { cn, toProperCase, liveProperCase, findDuplicateName } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 
@@ -33,52 +34,6 @@ interface GameInfo {
     homePosition?: number;
     showWhen?: { setting: string; value: unknown };
   }>;
-}
-
-function SettingPicker({
-  value,
-  onChange,
-  min,
-  max,
-  minLabel,
-  homePosition,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  min: number;
-  max: number;
-  minLabel?: string;
-  homePosition?: number;
-}) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || homePosition === undefined) return;
-    const itemSize = 52; // min-w-[2.75rem] = 44px + gap 1.5 = 6px ≈ 50px, close enough
-    const target = (homePosition - min) * itemSize - el.clientWidth / 2 + itemSize / 2;
-    el.scrollLeft = Math.max(0, target);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const numbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
-  return (
-    <div ref={scrollRef} className="flex gap-1.5 overflow-x-auto py-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
-      {numbers.map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange(n)}
-          className={cn(
-            "shrink-0 min-w-[2.75rem] h-9 rounded-full text-xs font-semibold transition-colors px-2",
-            n === value
-              ? "bg-accent text-white"
-              : "bg-surface-elevated border border-slate-600 text-slate-300 hover:border-accent hover:text-white"
-          )}
-        >
-          {n === min && minLabel ? minLabel : n}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 function NewGameForm() {

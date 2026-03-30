@@ -11,13 +11,11 @@ export async function GET() {
     const userId = authSession?.user.id ?? null;
     const isAdmin = authSession?.user.role === "admin";
 
-    // Read stats_visibility setting
     const visibilityRow = await db.query.appSettings.findFirst({
       where: eq(appSettings.key, "stats_visibility"),
     });
     const statsVisibility = visibilityRow?.value ?? "global";
 
-    // When scoped: regular users only see sessions they own
     const ownershipFilter =
       statsVisibility === "scoped" && userId && !isAdmin
         ? eq(sessions.userId, userId)
@@ -39,11 +37,22 @@ export async function GET() {
       },
     });
 
+    // Per-player stats
     const playerStats = new Map<string, {
       name: string;
       wins: number;
       losses: number;
-      byGame: Map<string, { gameId: string; gameName: string; gameEmoji: string; wins: number; losses: number }>;
+      byGame: Map<string, {
+        gameId: string;
+        gameName: string;
+        gameEmoji: string;
+        wins: number;
+        losses: number;
+        totalScore: number;
+        scoredGames: number; // sessions where this player had rounds
+      }>;
+      // head-to-head: opponent name -> { wins, losses }
+      h2h: Map<string, { wins: number; losses: number }>;
     }>();
 
     for (const session of completedSessions) {
@@ -56,7 +65,17 @@ export async function GET() {
         r.scores.map((s) => ({ ...s, roundNumber: r.roundNumber, metadata: s.metadata ?? undefined }))
       );
 
-      const standings = computeStandings(game, activePlayers, allScores, settings);
+      let standings = computeStandings(game, activePlayers, allScores, settings);
+
+      // Respect manual winner override
+      const manualWinnerId = settings.manualWinnerId as string | undefined;
+      if (manualWinnerId) {
+        standings = standings.map((s) => ({
+          ...s,
+          isWinning: s.playerId === manualWinnerId,
+          rank: s.playerId === manualWinnerId ? 1 : s.rank === 1 ? 2 : s.rank,
+        }));
+      }
 
       const seenNames = new Set<string>();
       for (const player of activePlayers) {
@@ -66,10 +85,16 @@ export async function GET() {
         const standing = standings.find((s) => s.playerId === player.id);
         if (!standing) continue;
 
-        const isWin = standing.rank === 1;
+        const isWin = standing.isWinning;
 
         if (!playerStats.has(player.name)) {
-          playerStats.set(player.name, { name: player.name, wins: 0, losses: 0, byGame: new Map() });
+          playerStats.set(player.name, {
+            name: player.name,
+            wins: 0,
+            losses: 0,
+            byGame: new Map(),
+            h2h: new Map(),
+          });
         }
 
         const stat = playerStats.get(player.name)!;
@@ -82,10 +107,30 @@ export async function GET() {
             gameEmoji: game.emoji,
             wins: 0,
             losses: 0,
+            totalScore: 0,
+            scoredGames: 0,
           });
         }
         const gameStat = stat.byGame.get(session.gameId)!;
         if (isWin) gameStat.wins++; else gameStat.losses++;
+        if (allScores.length > 0) {
+          gameStat.totalScore += standing.total;
+          gameStat.scoredGames++;
+        }
+
+        // Head-to-head: compare against all other active players in same session
+        for (const opponent of activePlayers) {
+          if (opponent.name === player.name || seenNames.has(opponent.name)) continue;
+          const oppStanding = standings.find((s) => s.playerId === opponent.id);
+          if (!oppStanding) continue;
+
+          if (!stat.h2h.has(opponent.name)) {
+            stat.h2h.set(opponent.name, { wins: 0, losses: 0 });
+          }
+          const h2hStat = stat.h2h.get(opponent.name)!;
+          if (standing.rank < oppStanding.rank) h2hStat.wins++;
+          else if (standing.rank > oppStanding.rank) h2hStat.losses++;
+        }
       }
     }
 
@@ -96,9 +141,19 @@ export async function GET() {
       totalGames: s.wins + s.losses,
       winPct: s.wins + s.losses > 0 ? s.wins / (s.wins + s.losses) : 0,
       byGame: Array.from(s.byGame.values()).map((g) => ({
-        ...g,
+        gameId: g.gameId,
+        gameName: g.gameName,
+        gameEmoji: g.gameEmoji,
+        wins: g.wins,
+        losses: g.losses,
         totalGames: g.wins + g.losses,
+        avgScore: g.scoredGames > 0 ? Math.round(g.totalScore / g.scoredGames) : null,
       })),
+      h2h: Array.from(s.h2h.entries()).map(([opponent, record]) => ({
+        opponent,
+        wins: record.wins,
+        losses: record.losses,
+      })).sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses)),
     }));
 
     result.sort((a, b) => b.winPct - a.winPct || b.wins - a.wins || a.name.localeCompare(b.name));

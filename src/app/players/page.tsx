@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Swords } from "lucide-react";
 import { HeaderActions } from "@/components/ui/HeaderActions";
+import { GameIcon } from "@/components/ui/GameIcon";
 
 interface GameBreakdown {
   gameId: string;
@@ -11,6 +12,13 @@ interface GameBreakdown {
   wins: number;
   losses: number;
   totalGames: number;
+  avgScore: number | null;
+}
+
+interface H2HRecord {
+  opponent: string;
+  wins: number;
+  losses: number;
 }
 
 interface PlayerStat {
@@ -20,7 +28,10 @@ interface PlayerStat {
   totalGames: number;
   winPct: number;
   byGame: GameBreakdown[];
+  h2h: H2HRecord[];
 }
+
+type ExpandSection = "games" | "h2h";
 
 function WinBar({ pct }: { pct: number }) {
   return (
@@ -38,12 +49,20 @@ export default function PlayersPage() {
   const [players, setPlayers] = useState<PlayerStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandSection, setExpandSection] = useState<Record<string, ExpandSection>>({});
 
   useEffect(() => {
     fetch("/api/players/stats")
       .then((r) => r.json())
       .then((data) => { setPlayers(data); setLoading(false); });
   }, []);
+
+  const toggleSection = (playerName: string, section: ExpandSection) => {
+    setExpandSection((prev) => ({
+      ...prev,
+      [playerName]: prev[playerName] === section ? "games" : section,
+    }));
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -82,6 +101,7 @@ export default function PlayersPage() {
             {players.map((player, idx) => {
               const isExpanded = expanded === player.name;
               const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : null;
+              const section = expandSection[player.name] ?? "games";
 
               return (
                 <div
@@ -114,22 +134,78 @@ export default function PlayersPage() {
 
                   {/* Expanded breakdown */}
                   {isExpanded && (
-                    <div className="border-t border-slate-700/50 px-4 py-3 space-y-2">
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
-                        By Game · {player.totalGames} total
-                      </p>
-                      {player.byGame.map((g) => (
-                        <div key={g.gameId} className="flex items-center gap-2">
-                          <span className="text-base w-6 text-center">{g.gameEmoji}</span>
-                          <span className="flex-1 text-sm text-slate-300">{g.gameName}</span>
-                          <span className="font-mono text-sm text-success w-8 text-center">{g.wins}</span>
-                          <span className="text-slate-600 text-xs">–</span>
-                          <span className="font-mono text-sm text-danger w-8 text-center">{g.losses}</span>
-                          <span className="font-mono text-xs text-slate-500 w-10 text-right">
-                            {Math.round((g.wins / g.totalGames) * 100)}%
-                          </span>
+                    <div className="border-t border-slate-700/50">
+                      {/* Section tabs */}
+                      <div className="flex border-b border-slate-700/50">
+                        <button
+                          onClick={() => toggleSection(player.name, "games")}
+                          className={`flex-1 py-2 text-xs font-semibold transition-colors ${
+                            section === "games"
+                              ? "text-accent border-b-2 border-accent"
+                              : "text-slate-500 hover:text-slate-300"
+                          }`}
+                        >
+                          By Game · {player.totalGames}
+                        </button>
+                        {player.h2h.length > 0 && (
+                          <button
+                            onClick={() => toggleSection(player.name, "h2h")}
+                            className={`flex-1 py-2 text-xs font-semibold transition-colors flex items-center justify-center gap-1 ${
+                              section === "h2h"
+                                ? "text-accent border-b-2 border-accent"
+                                : "text-slate-500 hover:text-slate-300"
+                            }`}
+                          >
+                            <Swords size={11} />
+                            Head-to-Head
+                          </button>
+                        )}
+                      </div>
+
+                      {section === "games" && (
+                        <div className="px-4 py-3 space-y-2">
+                          {player.byGame.map((g) => (
+                            <div key={g.gameId} className="flex items-center gap-2">
+                              <span className="w-6 flex items-center justify-center text-slate-400">
+                                <GameIcon gameId={g.gameId} size={14} strokeWidth={1.5} fallback={g.gameEmoji} />
+                              </span>
+                              <span className="flex-1 text-sm text-slate-300">{g.gameName}</span>
+                              <span className="font-mono text-sm text-success w-8 text-center">{g.wins}</span>
+                              <span className="text-slate-600 text-xs">–</span>
+                              <span className="font-mono text-sm text-danger w-8 text-center">{g.losses}</span>
+                              <span className="font-mono text-xs text-slate-500 w-10 text-right">
+                                {Math.round((g.wins / g.totalGames) * 100)}%
+                              </span>
+                              {g.avgScore !== null && (
+                                <span className="font-mono text-xs text-slate-600 w-14 text-right">
+                                  avg {g.avgScore}
+                                </span>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
+
+                      {section === "h2h" && (
+                        <div className="px-4 py-3 space-y-2">
+                          <p className="text-xs text-slate-600 mb-1">Games played directly against each opponent</p>
+                          {player.h2h.map((r) => {
+                            const total = r.wins + r.losses;
+                            const pct = total > 0 ? r.wins / total : 0;
+                            return (
+                              <div key={r.opponent} className="flex items-center gap-2">
+                                <span className="flex-1 text-sm text-slate-300">{r.opponent}</span>
+                                <span className="font-mono text-sm text-success w-8 text-center">{r.wins}</span>
+                                <span className="text-slate-600 text-xs">–</span>
+                                <span className="font-mono text-sm text-danger w-8 text-center">{r.losses}</span>
+                                <span className="font-mono text-xs text-slate-500 w-10 text-right">
+                                  {Math.round(pct * 100)}%
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

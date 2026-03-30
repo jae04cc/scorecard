@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Trophy, Clock, Trash2, Unlink } from "lucide-react";
+import { ArrowLeft, Trophy, Clock, Trash2, Unlink, Download, Search, X } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
@@ -40,6 +40,10 @@ export default function HistoryPage() {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [games, setGames] = useState<GameInfo[]>([]);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [authEnabled, setAuthEnabled] = useState<boolean>(true);
@@ -77,9 +81,44 @@ export default function HistoryPage() {
 
   const gameMap = new Map(games.map((g) => [g.id, g]));
 
-  const filtered = sessions.filter(
-    (s) => filter === "all" || s.status === filter
-  );
+  const searchLower = search.toLowerCase().trim();
+  const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
+  const toMs = dateTo ? new Date(dateTo + "T23:59:59").getTime() : null;
+
+  const filtered = sessions.filter((s) => {
+    if (filter !== "all" && s.status !== filter) return false;
+    if (searchLower) {
+      const gameName = (gameMap.get(s.gameId)?.name ?? s.gameId).toLowerCase();
+      const playerNames = s.players.filter((p) => p.active).map((p) => p.name.toLowerCase());
+      const matchesGame = gameName.includes(searchLower);
+      const matchesPlayer = playerNames.some((n) => n.includes(searchLower));
+      if (!matchesGame && !matchesPlayer) return false;
+    }
+    if (fromMs && s.createdAt < fromMs) return false;
+    if (toMs && s.createdAt > toMs) return false;
+    return true;
+  });
+
+  const handleExportCsv = () => {
+    const rows = [
+      ["ID", "Game", "Status", "Players", "Started", "Completed"],
+      ...sessions.map((s) => {
+        const game = gameMap.get(s.gameId);
+        const players = s.players.filter((p) => p.active).map((p) => p.name).join("; ");
+        const started = new Date(s.createdAt).toLocaleString();
+        const completed = s.completedAt ? new Date(s.completedAt).toLocaleString() : "";
+        return [s.id, game?.name ?? s.gameId, s.status, players, started, completed];
+      }),
+    ];
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `scorecard-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -100,11 +139,27 @@ export default function HistoryPage() {
             <ArrowLeft size={22} />
           </button>
           <h1 className="text-2xl font-black text-white">Game History</h1>
-          <HeaderActions />
+          <div className="flex items-center gap-0.5 ml-auto">
+            <button
+              onClick={() => setShowSearch((v) => !v)}
+              title="Search"
+              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+            >
+              <Search size={18} />
+            </button>
+            <button
+              onClick={handleExportCsv}
+              title="Export CSV"
+              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+            >
+              <Download size={18} />
+            </button>
+            <HeaderActions />
+          </div>
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-1 bg-surface-card rounded-xl p-1">
+        <div className="flex gap-1 bg-surface-card rounded-xl p-1 mb-2">
           {(["all", "active", "completed"] as const).map((f) => (
             <button
               key={f}
@@ -119,6 +174,42 @@ export default function HistoryPage() {
             </button>
           ))}
         </div>
+
+        {/* Search / date filter panel */}
+        {showSearch && (
+          <div className="space-y-2 pt-1 pb-2">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search by game or player…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-surface-card border border-slate-700 rounded-xl pl-8 pr-8 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-accent"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="flex-1 bg-surface-card border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-accent [color-scheme:dark]"
+              />
+              <span className="text-slate-600 text-xs self-center">to</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="flex-1 bg-surface-card border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-accent [color-scheme:dark]"
+              />
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="flex-1 px-5 pb-10">
