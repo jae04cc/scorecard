@@ -46,6 +46,29 @@ export function formatDateTime(date: DateLike): string {
   return `${formatDate(d)} - ${formatTime(d)}`;
 }
 
+// Compact: M/D/YY h:mm a — e.g. "3/29/26 3:45 PM"
+export function formatDateTimeCompact(date: DateLike): string {
+  const d = toDate(date);
+  if (!d) return "—";
+  const datePart = d.toLocaleDateString(undefined, { month: "numeric", day: "numeric", year: "2-digit" });
+  const timePart = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return `${datePart} ${timePart}`;
+}
+
+// Smart range: "3/29/26 3:45 → 4:12 PM" if same day, or "3/29/26 3:45 → 3/30/26 1:00 PM" if different
+export function formatDateTimeRange(start: DateLike, end: DateLike): string {
+  const s = toDate(start);
+  const e = toDate(end);
+  if (!s) return "—";
+  const startStr = formatDateTimeCompact(s);
+  if (!e) return startStr;
+  const sameDay = s.toDateString() === e.toDateString();
+  const endStr = sameDay
+    ? e.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+    : formatDateTimeCompact(e);
+  return `${startStr} → ${endStr}`;
+}
+
 export function formatDuration(start: DateLike, end: DateLike): string {
   const s = toDate(start);
   const e = toDate(end);

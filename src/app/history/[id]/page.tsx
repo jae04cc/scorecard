@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ScoreTable } from "@/components/game/ScoreTable";
 import { computeStandings, getGame, type GameDefinition } from "@/lib/games";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTimeRange } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 interface SessionData {
@@ -112,7 +112,7 @@ export default function GameHistoryPage() {
         ...shareRows.map((s) => {
           const medal = s.rank === 1 ? "🥇" : s.rank === 2 ? "🥈" : s.rank === 3 ? "🥉" : `#${s.rank}`;
           const displayName = s.team
-            ? `${s.team} (${stndgs.filter((m) => m.team === s.team).map((m) => m.playerName).join(" & ")})`
+            ? stndgs.filter((m) => m.team === s.team).map((m) => m.playerName).join(" & ")
             : s.playerName;
           return `${medal} ${displayName}: ${s.total}`;
         }),
@@ -200,8 +200,7 @@ export default function GameHistoryPage() {
               </Badge>
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-              {formatDateTime(session.createdAt)}
-              {session.completedAt && <> → {formatDateTime(session.completedAt)}</>}
+              {formatDateTimeRange(session.createdAt, session.completedAt)}
             </p>
           </div>
           <HeaderActions />
