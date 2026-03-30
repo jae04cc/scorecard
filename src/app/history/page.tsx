@@ -2,10 +2,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Trophy, Clock, Trash2 } from "lucide-react";
+import { ArrowLeft, Trophy, Clock, Trash2, Unlink } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { formatDateTime, formatDuration } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 interface GameInfo {
   id: string;
@@ -19,14 +20,18 @@ interface SessionSummary {
   status: "active" | "completed" | "abandoned";
   createdAt: number;
   completedAt: number | null;
+  userId: string | null;
   players: Array<{ name: string; active: boolean }>;
 }
 
 export default function HistoryPage() {
   const router = useRouter();
+  const { data: authSession } = useSession();
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [games, setGames] = useState<GameInfo[]>([]);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+
+  const isAdmin = !authSession || authSession.user.role === "admin";
 
   const refresh = async () => {
     const [sessionsRes, gamesRes] = await Promise.all([
@@ -98,6 +103,7 @@ export default function HistoryPage() {
                 .filter((p) => p.active)
                 .map((p) => p.name)
                 .join(", ");
+              const isOrphaned = s.userId === null;
 
               return (
                 <Link
@@ -125,6 +131,14 @@ export default function HistoryPage() {
                             >
                               {s.status}
                             </Badge>
+                            {isAdmin && isOrphaned && (
+                              <Badge variant="default">
+                                <span className="flex items-center gap-0.5">
+                                  <Unlink size={9} />
+                                  Orphaned
+                                </span>
+                              </Badge>
+                            )}
                             <span className="text-xs text-slate-500 bg-surface-elevated rounded-full px-2 py-0.5">
                               {formatDuration(s.createdAt, s.completedAt ?? Date.now())}
                             </span>
