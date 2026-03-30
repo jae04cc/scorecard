@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, RotateCcw } from "lucide-react";
+import { HeaderActions } from "@/components/ui/HeaderActions";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ScoreTable } from "@/components/game/ScoreTable";
@@ -75,9 +76,11 @@ export default function GameHistoryPage() {
 
   const winCondition = game.winCondition;
   const targetScore =
-    winCondition.type === "target" || winCondition.type === "highest" || winCondition.type === "lowest"
+    (game.targetScoreSettingKey ? (settings[game.targetScoreSettingKey] as number | undefined) : undefined) ??
+    (settings["targetScore"] as number | undefined) ??
+    (winCondition.type === "target" || winCondition.type === "highest" || winCondition.type === "lowest"
       ? (winCondition as { targetScore?: number }).targetScore
-      : undefined;
+      : undefined);
 
   const winners = standings.filter((s) => s.isWinning);
   const winningNames = winners.map((s) => s.playerName).join(" & ");
@@ -96,7 +99,7 @@ export default function GameHistoryPage() {
           >
             <ArrowLeft size={20} />
           </button>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-base bg-slate-200/30 shrink-0">{game.emoji}</div>
               <h1 className="text-xl font-black text-white">{game.name}</h1>
@@ -109,6 +112,7 @@ export default function GameHistoryPage() {
               {session.completedAt && ` — ended ${formatDateTime(session.completedAt)}`}
             </p>
           </div>
+          <HeaderActions />
         </div>
 
         {/* Final standings podium */}

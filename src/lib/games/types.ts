@@ -169,6 +169,10 @@ export interface GameDefinition {
   // Color / emoji for visual distinction on the home screen
   color: string; // Tailwind color class e.g. "bg-indigo-600"
   emoji: string;
+
+  // When the win condition target is controlled by a game setting, name the setting key here.
+  // The game page uses this to pull the live targetScore for the standings bar.
+  targetScoreSettingKey?: string;
 }
 
 export interface Standing {

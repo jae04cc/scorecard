@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { HeaderActions } from "@/components/ui/HeaderActions";
 
 interface GameBreakdown {
   gameId: string;
@@ -54,6 +55,7 @@ export default function PlayersPage() {
           <ArrowLeft size={22} />
         </button>
         <h1 className="text-2xl font-black text-white">Leaderboard</h1>
+        <HeaderActions />
       </header>
 
       <main className="flex-1 px-5 pb-10">

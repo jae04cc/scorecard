@@ -40,6 +40,7 @@ export async function PATCH(
       notes: typeof sessions.$inferInsert.notes;
       settings: typeof sessions.$inferInsert.settings;
       completedAt: number | Date | null;
+      userId: string | null;
     }>;
 
     const updates: Partial<typeof sessions.$inferInsert> = {};
@@ -57,11 +58,14 @@ export async function PATCH(
     }
 
     if ("completedAt" in body) {
-      // completedAt is a timestamp_ms column - Drizzle needs a Date object, not a number
       updates.completedAt =
         typeof body.completedAt === "number"
           ? new Date(body.completedAt)
           : body.completedAt;
+    }
+
+    if ("userId" in body) {
+      updates.userId = body.userId;
     }
 
     if (Object.keys(updates).length === 0) {

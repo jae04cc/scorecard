@@ -6,7 +6,7 @@ import type { GameDefinition } from "./types";
 // Game ends when one player flips their last card (trigger round).
 // All other players get one more turn. The trigger player gets a penalty
 // if they don't have the lowest score that round.
-// Play until someone reaches 100 points — lowest score at that point wins.
+// Play until someone reaches the end score — lowest score at that point wins.
 // ---------------------------------------------------------------------------
 
 export const skyjoGame: GameDefinition = {
@@ -20,6 +20,7 @@ export const skyjoGame: GameDefinition = {
   roundName: "Round",
   color: "bg-sky-600",
   emoji: "🎴",
+  targetScoreSettingKey: "endScore",
 
   winCondition: {
     type: "target",
@@ -59,39 +60,81 @@ export const skyjoGame: GameDefinition = {
     },
   ],
 
-  cheatSheet: [
-    {
-      title: "Card Values",
-      entries: [
-        { label: "Cards −2", value: "5 cards" },
-        { label: "Cards 0", value: "15 cards" },
-        { label: "Cards 1–12", value: "10 cards each" },
-        { label: "Card range", value: "−2 to 12" },
-      ],
-    },
-    {
-      title: "Round End Rules",
-      entries: [
-        {
-          label: "Trigger",
-          note: "Flip your last card;\neveryone else gets one more turn",
-        },
-        {
-          label: "Trigger penalty",
-          note: "Didn't have the lowest round score?\nYour score ×2",
-        },
-        {
-          label: "Column bonus",
-          note: "3 identical cards in a column:\ndiscard them (score 0)",
-        },
-      ],
-    },
-    {
-      title: "Winning",
-      entries: [
-        { label: "Game ends when", note: "Any player hits 100+ total" },
-        { label: "Winner", note: "Lowest cumulative score wins" },
-      ],
-    },
-  ],
+  // Custom standings: respects the endScore setting rather than hardcoded 100
+  computeStandings: (players, scores, settings) => {
+    const endScore = (settings["endScore"] as number | undefined) ?? 100;
+
+    const totals = new Map<string, number>();
+    for (const p of players) totals.set(p.id, 0);
+    for (const s of scores) {
+      totals.set(s.playerId, (totals.get(s.playerId) ?? 0) + s.score);
+    }
+
+    const standings = players.map((p) => ({
+      playerId: p.id,
+      playerName: p.name,
+      team: p.team ?? null,
+      total: totals.get(p.id) ?? 0,
+      rank: 0,
+      isWinning: false,
+    }));
+
+    // Lowest wins
+    standings.sort((a, b) => a.total - b.total);
+
+    // Game over when any player has reached or exceeded the trigger score
+    const gameOver = standings.some((s) => s.total >= endScore);
+
+    let rank = 1;
+    for (let i = 0; i < standings.length; i++) {
+      if (i > 0 && standings[i].total !== standings[i - 1].total) rank = i + 1;
+      standings[i].rank = rank;
+      standings[i].isWinning = rank === 1 && gameOver;
+    }
+
+    return standings;
+  },
+
+  getCheatSheet: (settings) => {
+    const endScore = (settings["endScore"] as number | undefined) ?? 100;
+    const penaltyRaw = (settings["triggerPenalty"] as number | undefined) ?? 2;
+    const penaltyLabel =
+      penaltyRaw === 1 ? "None (disabled)" : `×${penaltyRaw}`;
+
+    return [
+      {
+        title: "Card Values",
+        entries: [
+          { label: "Cards −2", value: "5 cards" },
+          { label: "Cards 0", value: "15 cards" },
+          { label: "Cards 1–12", value: "10 cards each" },
+          { label: "Card range", value: "−2 to 12" },
+        ],
+      },
+      {
+        title: "Round End Rules",
+        entries: [
+          {
+            label: "Trigger",
+            note: "Flip your last card;\neveryone else gets one more turn",
+          },
+          {
+            label: "Trigger penalty",
+            note: `Didn't have the lowest round score?\nYour score ${penaltyLabel}`,
+          },
+          {
+            label: "Column bonus",
+            note: "3 identical cards in a column:\ndiscard them (score 0)",
+          },
+        ],
+      },
+      {
+        title: "Winning",
+        entries: [
+          { label: "Game ends when", note: `Any player hits ${endScore}+ total` },
+          { label: "Winner", note: "Lowest cumulative score wins" },
+        ],
+      },
+    ];
+  },
 };
