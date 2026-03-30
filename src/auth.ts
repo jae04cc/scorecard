@@ -6,13 +6,14 @@ import { eq } from "drizzle-orm";
 import { verifyPassword } from "@/lib/password";
 
 // ---------------------------------------------------------------------------
-// Type augmentation — adds `id` and `role` to the session user object
+// Type augmentation — adds `id`, `role`, and `firstName` to the session user
 // ---------------------------------------------------------------------------
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
       role: "admin" | "user";
+      firstName: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -106,6 +107,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
         if (account.provider === "local") {
           token.role = "admin";
           token.userId = "local-admin";
+          token.firstName = null;
           return token;
         }
 
@@ -119,16 +121,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
           });
 
           if (existing) {
-            await db
-              .update(users)
-              .set({
-                name: (profile.name as string | null) ?? existing.name,
-                email: (profile.email as string | null) ?? existing.email,
-                lastLoginAt: now,
-              })
-              .where(eq(users.sub, sub));
+            // Only update name from OIDC if user hasn't set their own firstName
+            const nameUpdates: Partial<typeof users.$inferInsert> = {
+              email: (profile.email as string | null) ?? existing.email,
+              lastLoginAt: now,
+            };
+            if (!existing.firstName) {
+              nameUpdates.name = (profile.name as string | null) ?? existing.name;
+            }
+            await db.update(users).set(nameUpdates).where(eq(users.sub, sub));
             token.role = existing.role;
             token.userId = existing.id;
+            token.firstName = existing.firstName ?? null;
           } else {
             // First OIDC user becomes admin
             const count = await db.select().from(users);
@@ -145,6 +149,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
             });
             token.role = role;
             token.userId = id;
+            token.firstName = null;
           }
         }
         return token;
@@ -153,6 +158,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
       async session({ session, token }) {
         session.user.id = (token.userId as string | undefined) ?? "";
         session.user.role = ((token.role as string | undefined) ?? "user") as "admin" | "user";
+        session.user.firstName = (token.firstName as string | null | undefined) ?? null;
         return session;
       },
     },

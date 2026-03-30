@@ -22,13 +22,13 @@ export async function GET(req: NextRequest) {
       : undefined;
 
     if (!authEnabled) {
-      // Auth off — return everything
+      // Auth off — return everything, no owner info needed
       const rows = await db.query.sessions.findMany({
         with: { players: true },
         orderBy: [desc(sessions.createdAt)],
         where: statusFilter,
       });
-      return NextResponse.json(rows);
+      return NextResponse.json(rows.map((r) => ({ ...r, authEnabled: false })));
     }
 
     // Auth is enabled — check who's asking
@@ -37,18 +37,24 @@ export async function GET(req: NextRequest) {
     const isAdmin = session?.user.role === "admin";
 
     if (!userId) {
-      // Not logged in with auth enabled — return nothing
       return NextResponse.json([]);
     }
 
     if (isAdmin) {
-      // Admins see everything
+      // Admins see everything + owner info
       const rows = await db.query.sessions.findMany({
-        with: { players: true },
+        with: { players: true, user: true },
         orderBy: [desc(sessions.createdAt)],
         where: statusFilter,
       });
-      return NextResponse.json(rows);
+      return NextResponse.json(rows.map((r) => ({
+        ...r,
+        authEnabled: true,
+        ownerName: r.user
+          ? (r.user.firstName ?? r.user.name?.split(" ")[0] ?? null)
+          : null,
+        user: undefined,
+      })));
     }
 
     // Regular user — own sessions only
