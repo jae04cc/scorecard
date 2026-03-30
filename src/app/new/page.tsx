@@ -3,9 +3,11 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Trash2, ArrowLeft, ChevronDown } from "lucide-react";
 import { HeaderActions } from "@/components/ui/HeaderActions";
+import { GameIcon } from "@/components/ui/GameIcon";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { cn, toProperCase, liveProperCase, findDuplicateName } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 interface GameInfo {
   id: string;
@@ -83,6 +85,7 @@ function NewGameForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedGameId = searchParams.get("game");
+  const { data: authSession } = useSession();
 
   const [games, setGames] = useState<GameInfo[]>([]);
   const [selectedGameId, setSelectedGameId] = useState<string>(preselectedGameId ?? "");
@@ -90,6 +93,20 @@ function NewGameForm() {
   const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // User's first name for Player 1 prefill — fetch if session exists but firstName not yet in token
+  const [userFirstName, setUserFirstName] = useState<string>(() => authSession?.user.firstName ?? "");
+  useEffect(() => {
+    if (authSession?.user.firstName) {
+      setUserFirstName(authSession.user.firstName);
+    } else if (authSession?.user.id && authSession.user.id !== "local-admin") {
+      fetch("/api/user/profile")
+        .then((r) => r.json())
+        .then((d: { firstName?: string | null }) => {
+          if (d.firstName) setUserFirstName(d.firstName);
+        });
+    }
+  }, [authSession]);
 
   useEffect(() => {
     fetch("/api/games").then((r) => r.json()).then((data: GameInfo[]) => {
@@ -150,7 +167,7 @@ function NewGameForm() {
       return;
     }
 
-    const filled = playerNames.map((n, i) => toProperCase(n) || `Player ${i + 1}`);
+    const filled = playerNames.map((n, i) => toProperCase(n) || (i === 0 && userFirstName ? userFirstName : `Player ${i + 1}`));
 
     const dup = findDuplicateName(filled);
     if (dup) {
@@ -222,7 +239,7 @@ function NewGameForm() {
                     : "border-slate-700/50 bg-surface-card hover:border-slate-600"
                 )}
               >
-                <span className="text-lg leading-none">{game.emoji}</span>
+                <span className="text-slate-300"><GameIcon gameId={game.id} size={18} strokeWidth={1.5} fallback={game.emoji} /></span>
                 <span className="font-semibold text-xs text-white leading-tight text-center">{game.name}</span>
               </button>
             ))}
@@ -263,7 +280,7 @@ function NewGameForm() {
                             return (
                               <Input
                                 key={idx}
-                                placeholder={`Player ${idx + 1}`}
+                                placeholder={idx === 0 && userFirstName ? userFirstName : `Player ${idx + 1}`}
                                 value={name}
                                 onChange={(e) => setPlayerName(idx, e.target.value)}
                                 className="flex-1"
@@ -293,7 +310,7 @@ function NewGameForm() {
                   {playerNames.map((name, idx) => (
                     <Input
                       key={idx}
-                      placeholder={`Player ${idx + 1}`}
+                      placeholder={idx === 0 && userFirstName ? userFirstName : `Player ${idx + 1}`}
                       value={name}
                       onChange={(e) => setPlayerName(idx, e.target.value)}
                       className="w-full"
@@ -353,7 +370,7 @@ function NewGameForm() {
                 {playerNames.map((name, idx) => (
                   <div key={idx} className="flex gap-2">
                     <Input
-                      placeholder={`Player ${idx + 1}`}
+                      placeholder={idx === 0 && userFirstName ? userFirstName : `Player ${idx + 1}`}
                       value={name}
                       onChange={(e) => setPlayerName(idx, e.target.value)}
                       className="flex-1"

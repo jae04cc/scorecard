@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Trophy, Clock, Trash2, Unlink } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { formatDateTime, formatDuration } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { HeaderActions } from "@/components/ui/HeaderActions";
@@ -22,6 +23,8 @@ interface SessionSummary {
   createdAt: number;
   completedAt: number | null;
   userId: string | null;
+  ownerName?: string | null;
+  authEnabled?: boolean;
   players: Array<{ name: string; active: boolean }>;
 }
 
@@ -39,6 +42,7 @@ export default function HistoryPage() {
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [users, setUsers] = useState<UserOption[]>([]);
   const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [authEnabled, setAuthEnabled] = useState<boolean>(true);
 
   const isAdmin = authSession?.user.role === "admin";
 
@@ -52,6 +56,7 @@ export default function HistoryPage() {
   };
 
   useEffect(() => {
+    fetch("/api/config").then((r) => r.json()).then((d) => setAuthEnabled(d.authEnabled));
     refresh();
     if (isAdmin) {
       fetch("/api/admin/users").then((r) => r.json()).then(setUsers);
@@ -141,7 +146,12 @@ export default function HistoryPage() {
                   <Card className={`hover:border-slate-600 transition-all active:scale-[0.99] cursor-pointer group ${s.status === "active" ? "border-success/40" : ""}`}>
                     <CardBody>
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-xl shrink-0 bg-slate-200/30">{game?.emoji ?? "🎮"}</div>
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                          style={gameIconStyle(s.gameId)}
+                        >
+                          <GameIcon gameId={s.gameId} size={18} strokeWidth={1.5} fallback={game?.emoji ?? "🎮"} />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-white text-sm">
@@ -158,7 +168,7 @@ export default function HistoryPage() {
                             >
                               {s.status}
                             </Badge>
-                            {isAdmin && isOrphaned && (
+                            {authEnabled && isAdmin && isOrphaned && (
                               <Badge variant="default">
                                 <span className="flex items-center gap-0.5">
                                   <Unlink size={9} />
@@ -171,6 +181,9 @@ export default function HistoryPage() {
                             </span>
                           </div>
                           <p className="text-xs text-slate-400 truncate mt-0.5">{playerList}</p>
+                          {authEnabled && isAdmin && s.ownerName && (
+                            <p className="text-xs text-slate-500 mt-0.5">{s.ownerName}</p>
+                          )}
                           <p className="text-xs text-slate-600">
                             {formatDateTime(s.createdAt)}
                             {s.completedAt && <> → {formatDateTime(s.completedAt)}</>}
@@ -186,7 +199,7 @@ export default function HistoryPage() {
                     </CardBody>
                   </Card>
                 </Link>
-                {isAdmin && isOrphaned && (
+                {authEnabled && isAdmin && isOrphaned && (
                   <div className="mt-1 px-1 flex items-center gap-2">
                     <Unlink size={11} className="text-slate-600 shrink-0" />
                     <span className="text-xs text-slate-600">Assign to:</span>
