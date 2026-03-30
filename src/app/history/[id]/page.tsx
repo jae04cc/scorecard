@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, RotateCcw } from "lucide-react";
+import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { HeaderActions } from "@/components/ui/HeaderActions";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -101,7 +102,12 @@ export default function GameHistoryPage() {
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-base bg-slate-200/30 shrink-0">{game.emoji}</div>
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                style={gameIconStyle(game.id)}
+              >
+                <GameIcon gameId={game.id} size={16} strokeWidth={1.5} fallback={game.emoji} />
+              </div>
               <h1 className="text-xl font-black text-white">{game.name}</h1>
               <Badge variant={session.status === "completed" ? "accent" : "success"}>
                 {session.status}

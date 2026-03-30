@@ -10,6 +10,7 @@ import {
   BookOpen,
   Trash2,
 } from "lucide-react";
+import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { HeaderActions } from "@/components/ui/HeaderActions";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -265,7 +266,12 @@ export default function GamePage() {
           </button>
           <div className="flex-1 min-w-0 overflow-hidden">
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-base bg-slate-200/30 shrink-0">{game.emoji}</div>
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                style={gameIconStyle(game.id)}
+              >
+                <GameIcon gameId={game.id} size={16} strokeWidth={1.5} fallback={game.emoji} />
+              </div>
               <h1 className="text-xl font-black text-white">{game.name}</h1>
               <Badge variant={session.status === "active" ? "success" : "default"}>
                 {session.status}

@@ -2,18 +2,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Clock, Trophy, ChevronRight, Medal, Settings, User, LogIn, Unlink, Swords, Coins, LayoutGrid, Zap, type LucideIcon } from "lucide-react";
+import { Clock, Trophy, ChevronRight, Medal, Settings, User, LogIn, Unlink } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { cn, formatDate } from "@/lib/utils";
 import { useSession, signIn } from "next-auth/react";
-
-const GAME_ICONS: Record<string, LucideIcon> = {
-  spades: Swords,
-  casino: Coins,
-  skyjo: LayoutGrid,
-  "catch-five": Zap,
-};
 
 interface GameInfo {
   id: string;
@@ -146,18 +140,12 @@ export default function HomePage() {
                     : "hover:border-accent/50 hover:bg-surface-elevated"
                 )}>
                   <CardBody className="p-3 items-center text-center">
-                    {(() => {
-                      const Icon = GAME_ICONS[game.id];
-                      return Icon ? (
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 bg-surface-elevated text-slate-300">
-                          <Icon size={22} strokeWidth={1.5} />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-2 bg-surface-elevated">
-                          {game.emoji}
-                        </div>
-                      );
-                    })()}
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center mb-2"
+                      style={gameIconStyle(game.id)}
+                    >
+                      <GameIcon gameId={game.id} size={22} strokeWidth={1.5} fallback={game.emoji} />
+                    </div>
                     <div className="font-bold text-white text-sm leading-tight mb-0.5">
                       {game.name}
                     </div>
@@ -198,14 +186,19 @@ export default function HomePage() {
                     )}>
                       <CardBody>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-base bg-slate-200/30 shrink-0">{game?.emoji ?? "🎮"}</div>
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                            style={gameIconStyle(s.gameId)}
+                          >
+                            <GameIcon gameId={s.gameId} size={16} strokeWidth={1.5} fallback={game?.emoji ?? "🎮"} />
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-slate-200 text-sm">
                                 {game?.name ?? s.gameId}
                               </span>
                               {isActive && <Badge variant="success">Active</Badge>}
-                              {isAdmin && isOrphaned && (
+                              {authEnabled && isAdmin && isOrphaned && (
                                 <Badge variant="default">
                                   <span className="flex items-center gap-0.5">
                                     <Unlink size={9} />
