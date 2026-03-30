@@ -78,4 +78,11 @@ export async function runMigrations() {
       value TEXT NOT NULL
     );
   `);
+
+  // Additive column migrations — ALTER TABLE ignores already-existing columns via PRAGMA check
+  const cols = await client.execute("PRAGMA table_info(sessions)");
+  const hasUserId = cols.rows.some((r) => r[1] === "user_id");
+  if (!hasUserId) {
+    await client.execute("ALTER TABLE sessions ADD COLUMN user_id TEXT REFERENCES users(id)");
+  }
 }

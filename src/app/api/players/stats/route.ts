@@ -1,13 +1,35 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sessions } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { appSettings, sessions } from "@/lib/db/schema";
+import { and, eq } from "drizzle-orm";
 import { computeStandings, getGame } from "@/lib/games";
+import { auth } from "@/auth";
 
 export async function GET() {
   try {
+    const authSession = await auth();
+    const userId = authSession?.user.id ?? null;
+    const isAdmin = authSession?.user.role === "admin";
+
+    // Read stats_visibility setting
+    const visibilityRow = await db.query.appSettings.findFirst({
+      where: eq(appSettings.key, "stats_visibility"),
+    });
+    const statsVisibility = visibilityRow?.value ?? "global";
+
+    // When scoped: regular users only see sessions they own
+    const ownershipFilter =
+      statsVisibility === "scoped" && userId && !isAdmin
+        ? eq(sessions.userId, userId)
+        : undefined;
+
+    const completedFilter = eq(sessions.status, "completed");
+    const where = ownershipFilter
+      ? and(completedFilter, ownershipFilter)
+      : completedFilter;
+
     const completedSessions = await db.query.sessions.findMany({
-      where: eq(sessions.status, "completed"),
+      where,
       with: {
         players: { orderBy: (p, { asc }) => [asc(p.position)] },
         rounds: {
@@ -36,7 +58,6 @@ export async function GET() {
 
       const standings = computeStandings(game, activePlayers, allScores, settings);
 
-      // Deduplicate: in team games both players share rank 1 — each player gets one result per session
       const seenNames = new Set<string>();
       for (const player of activePlayers) {
         if (seenNames.has(player.name)) continue;
