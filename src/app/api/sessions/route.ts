@@ -1,44 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sessions, sessionPlayers } from "@/lib/db/schema";
+import { appSettings, sessions, sessionPlayers } from "@/lib/db/schema";
 import { generateId } from "@/lib/utils";
 import { getGame } from "@/lib/games";
 import { auth } from "@/auth";
-import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const status = searchParams.get("status"); // 'active' | 'completed' | all
+  const status = searchParams.get("status");
 
   try {
-    const session = await auth();
-    const userId = session?.user.id ?? null;
-    const isAdmin = session?.user.role === "admin";
-
-    // Build where clause:
-    // - No session (auth disabled or not logged in): return all
-    // - Admin: return all
-    // - Regular user: return only their own sessions
-    const ownershipFilter =
-      !userId || isAdmin
-        ? undefined
-        : or(eq(sessions.userId, userId), isNull(sessions.userId));
+    // Check if auth is enabled
+    const oidcRow = await db.query.appSettings.findFirst({
+      where: eq(appSettings.key, "oidc_enabled"),
+    });
+    const authEnabled = oidcRow?.value === "true";
 
     const statusFilter = status
       ? eq(sessions.status, status as "active" | "completed" | "abandoned")
       : undefined;
 
-    const where =
-      ownershipFilter && statusFilter
-        ? and(ownershipFilter, statusFilter)
-        : ownershipFilter ?? statusFilter;
+    if (!authEnabled) {
+      // Auth off — return everything
+      const rows = await db.query.sessions.findMany({
+        with: { players: true },
+        orderBy: [desc(sessions.createdAt)],
+        where: statusFilter,
+      });
+      return NextResponse.json(rows);
+    }
+
+    // Auth is enabled — check who's asking
+    const session = await auth();
+    const userId = session?.user.id ?? null;
+    const isAdmin = session?.user.role === "admin";
+
+    if (!userId) {
+      // Not logged in with auth enabled — return nothing
+      return NextResponse.json([]);
+    }
+
+    if (isAdmin) {
+      // Admins see everything
+      const rows = await db.query.sessions.findMany({
+        with: { players: true },
+        orderBy: [desc(sessions.createdAt)],
+        where: statusFilter,
+      });
+      return NextResponse.json(rows);
+    }
+
+    // Regular user — own sessions only
+    const ownerFilter = eq(sessions.userId, userId);
+    const where = statusFilter ? and(ownerFilter, statusFilter) : ownerFilter;
 
     const rows = await db.query.sessions.findMany({
       with: { players: true },
       orderBy: [desc(sessions.createdAt)],
       where,
     });
-
     return NextResponse.json(rows);
   } catch (err) {
     console.error(err);
@@ -62,9 +83,7 @@ export async function POST(req: NextRequest) {
 
     if (playerNames.length < game.minPlayers || playerNames.length > game.maxPlayers) {
       return NextResponse.json(
-        {
-          error: `${game.name} requires ${game.minPlayers}–${game.maxPlayers} players. Got ${playerNames.length}.`,
-        },
+        { error: `${game.name} requires ${game.minPlayers}–${game.maxPlayers} players. Got ${playerNames.length}.` },
         { status: 400 }
       );
     }
@@ -75,14 +94,12 @@ export async function POST(req: NextRequest) {
     const sessionId = generateId();
     const now = Date.now();
 
-    // Apply default settings from game definition
     const defaultSettings: Record<string, unknown> = {};
     for (const s of game.settings) {
       defaultSettings[s.key] = s.defaultValue;
     }
     const mergedSettings = { ...defaultSettings, ...settings };
 
-    // Insert session
     await db.insert(sessions).values({
       id: sessionId,
       gameId,
@@ -92,7 +109,6 @@ export async function POST(req: NextRequest) {
       userId,
     });
 
-    // Insert players
     const players = playerNames.map((name, idx) => ({
       id: generateId(),
       sessionId,

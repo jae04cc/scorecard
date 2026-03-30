@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Clock, Trophy, ChevronRight, Medal, Settings, User } from "lucide-react";
+import { Clock, Trophy, ChevronRight, Medal, Settings, User, LogIn, Unlink } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { cn, formatDate } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 
 interface GameInfo {
   id: string;
@@ -23,25 +24,50 @@ interface SessionSummary {
   gameId: string;
   status: string;
   createdAt: number;
+  userId: string | null;
   players: Array<{ name: string; active: boolean }>;
 }
 
 export default function HomePage() {
   const router = useRouter();
-  const { data: authSession } = useSession();
+  const { data: authSession, status: sessionStatus } = useSession();
+  const [authEnabled, setAuthEnabled] = useState<boolean | null>(null);
   const [games, setGames] = useState<GameInfo[]>([]);
   const [recentSessions, setRecentSessions] = useState<SessionSummary[]>([]);
 
-  const isAdmin = !authSession || authSession.user.role === "admin";
-
   useEffect(() => {
+    fetch("/api/config").then((r) => r.json()).then((d) => setAuthEnabled(d.authEnabled));
     fetch("/api/games").then((r) => r.json()).then(setGames);
     fetch("/api/sessions")
       .then((r) => r.json())
-      .then((data: SessionSummary[]) => setRecentSessions(data.slice(0, 3)));
+      .then((data: SessionSummary[]) => {
+        if (Array.isArray(data)) setRecentSessions(data.slice(0, 3));
+      });
   }, []);
 
+  const configLoading = authEnabled === null || sessionStatus === "loading";
+  const isLoggedIn = sessionStatus === "authenticated";
+  const isWalled = authEnabled && !isLoggedIn;
+  const isAdmin = !authEnabled || authSession?.user.role === "admin";
+
   const gameMap = new Map(games.map((g) => [g.id, g]));
+
+  const handleGameClick = (gameId: string) => {
+    if (isWalled) {
+      router.push("/profile");
+    } else {
+      router.push(`/new?game=${gameId}`);
+    }
+  };
+
+  // Don't render anything until we know if we're walled (avoids flash)
+  if (configLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-accent border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -53,32 +79,44 @@ export default function HomePage() {
             <p className="text-slate-400 text-sm mt-0.5">Track any game, any time</p>
           </div>
           <div className="flex items-center gap-1">
-            {isAdmin && (
+            {/* When walled: only show profile icon */}
+            {isWalled ? (
               <Link
-                href="/admin"
+                href="/profile"
                 className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
               >
-                <Settings size={22} />
+                <User size={22} />
               </Link>
+            ) : (
+              <>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+                  >
+                    <Settings size={22} />
+                  </Link>
+                )}
+                <Link
+                  href="/profile"
+                  className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+                >
+                  <User size={22} />
+                </Link>
+                <Link
+                  href="/players"
+                  className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+                >
+                  <Medal size={22} />
+                </Link>
+                <Link
+                  href="/history"
+                  className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+                >
+                  <Clock size={22} />
+                </Link>
+              </>
             )}
-            <Link
-              href="/profile"
-              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
-            >
-              <User size={22} />
-            </Link>
-            <Link
-              href="/players"
-              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
-            >
-              <Medal size={22} />
-            </Link>
-            <Link
-              href="/history"
-              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
-            >
-              <Clock size={22} />
-            </Link>
           </div>
         </div>
       </header>
@@ -93,13 +131,16 @@ export default function HomePage() {
             {games.map((game) => (
               <button
                 key={game.id}
-                onClick={() => router.push(`/new?game=${game.id}`)}
+                onClick={() => handleGameClick(game.id)}
               >
-                <Card className="hover:border-accent/50 hover:bg-surface-elevated transition-all active:scale-[0.98] h-full">
+                <Card className={cn(
+                  "transition-all active:scale-[0.98] h-full",
+                  isWalled
+                    ? "opacity-50 hover:opacity-70"
+                    : "hover:border-accent/50 hover:bg-surface-elevated"
+                )}>
                   <CardBody className="p-3 items-center text-center">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-xl mb-2 bg-slate-200/30"
-                    >
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl mb-2 bg-slate-200/30">
                       {game.emoji}
                     </div>
                     <div className="font-bold text-white text-sm leading-tight mb-0.5">
@@ -117,8 +158,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Recent completed sessions */}
-        {recentSessions.length > 0 && (
+        {/* Recent games — only shown when not walled */}
+        {!isWalled && recentSessions.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
@@ -132,6 +173,7 @@ export default function HomePage() {
               {recentSessions.map((s) => {
                 const game = gameMap.get(s.gameId);
                 const isActive = s.status === "active";
+                const isOrphaned = s.userId === null;
                 const href = isActive ? `/game/${s.id}` : `/history/${s.id}`;
                 return (
                   <Link key={s.id} href={href} className="block">
@@ -143,11 +185,19 @@ export default function HomePage() {
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-base bg-slate-200/30 shrink-0">{game?.emoji ?? "🎮"}</div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-slate-200 text-sm">
                                 {game?.name ?? s.gameId}
                               </span>
                               {isActive && <Badge variant="success">Active</Badge>}
+                              {isAdmin && isOrphaned && (
+                                <Badge variant="default">
+                                  <span className="flex items-center gap-0.5">
+                                    <Unlink size={9} />
+                                    Orphaned
+                                  </span>
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-xs text-slate-500 mt-1">
                               {formatDate(s.createdAt)} ·{" "}
@@ -170,6 +220,22 @@ export default function HomePage() {
           </section>
         )}
       </main>
+
+      {/* Sign-in prompt when walled */}
+      {isWalled && (
+        <footer className="px-5 pb-8 space-y-3" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}>
+          <p className="text-center text-xs text-slate-500">
+            Sign in to start tracking games
+          </p>
+          <button
+            onClick={() => signIn("oidc", { callbackUrl: "/" })}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent text-white font-bold text-sm hover:bg-accent/90 transition-colors"
+          >
+            <LogIn size={16} />
+            Sign In
+          </button>
+        </footer>
+      )}
     </div>
   );
 }
