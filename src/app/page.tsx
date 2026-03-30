@@ -6,6 +6,7 @@ import { Clock, Trophy, ChevronRight, Medal, Settings, User } from "lucide-react
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { cn, formatDate } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 interface GameInfo {
   id: string;
@@ -27,8 +28,11 @@ interface SessionSummary {
 
 export default function HomePage() {
   const router = useRouter();
+  const { data: authSession } = useSession();
   const [games, setGames] = useState<GameInfo[]>([]);
   const [recentSessions, setRecentSessions] = useState<SessionSummary[]>([]);
+
+  const isAdmin = !authSession || authSession.user.role === "admin";
 
   useEffect(() => {
     fetch("/api/games").then((r) => r.json()).then(setGames);
@@ -49,12 +53,14 @@ export default function HomePage() {
             <p className="text-slate-400 text-sm mt-0.5">Track any game, any time</p>
           </div>
           <div className="flex items-center gap-1">
-            <Link
-              href="/admin"
-              className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
-            >
-              <Settings size={22} />
-            </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"
+              >
+                <Settings size={22} />
+              </Link>
+            )}
             <Link
               href="/profile"
               className="p-2 rounded-xl hover:bg-surface-card text-slate-400 hover:text-white transition-colors"

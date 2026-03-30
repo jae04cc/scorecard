@@ -15,6 +15,8 @@ export const sessions = sqliteTable("sessions", {
   // JSON blob for game-specific settings (target score, team mode, etc.)
   settings: text("settings").default("{}"),
   notes: text("notes"),
+  // Null for games created before auth was enabled, or when auth is disabled
+  userId: text("user_id").references(() => users.id),
 });
 
 // ---------------------------------------------------------------------------
@@ -68,9 +70,10 @@ export const roundScores = sqliteTable("round_scores", {
 // ---------------------------------------------------------------------------
 // Relations
 // ---------------------------------------------------------------------------
-export const sessionsRelations = relations(sessions, ({ many }) => ({
+export const sessionsRelations = relations(sessions, ({ one, many }) => ({
   players: many(sessionPlayers),
   rounds: many(rounds),
+  user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));
 
 export const sessionPlayersRelations = relations(
