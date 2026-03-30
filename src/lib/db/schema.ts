@@ -114,6 +114,9 @@ export const users = sqliteTable("users", {
   sub: text("sub").notNull().unique(), // OIDC subject claim (stable identifier)
   email: text("email"),
   name: text("name"),
+  // User-set name — takes precedence over OIDC claims once set
+  firstName: text("first_name"),
+  lastName: text("last_name"),
   role: text("role", { enum: ["admin", "user"] }).notNull().default("user"),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   lastLoginAt: integer("last_login_at", { mode: "timestamp_ms" }),

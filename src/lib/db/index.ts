@@ -80,9 +80,16 @@ export async function runMigrations() {
   `);
 
   // Additive column migrations — ALTER TABLE ignores already-existing columns via PRAGMA check
-  const cols = await client.execute("PRAGMA table_info(sessions)");
-  const hasUserId = cols.rows.some((r) => r[1] === "user_id");
-  if (!hasUserId) {
+  const sessionCols = await client.execute("PRAGMA table_info(sessions)");
+  if (!sessionCols.rows.some((r) => r[1] === "user_id")) {
     await client.execute("ALTER TABLE sessions ADD COLUMN user_id TEXT REFERENCES users(id)");
+  }
+
+  const userCols = await client.execute("PRAGMA table_info(users)");
+  if (!userCols.rows.some((r) => r[1] === "first_name")) {
+    await client.execute("ALTER TABLE users ADD COLUMN first_name TEXT");
+  }
+  if (!userCols.rows.some((r) => r[1] === "last_name")) {
+    await client.execute("ALTER TABLE users ADD COLUMN last_name TEXT");
   }
 }
