@@ -1,26 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background -->
-  <rect width="512" height="512" rx="112" fill="#0e0e18"/>
-  <!-- Card body -->
-  <rect x="124" y="96" width="264" height="320" rx="24" fill="#1e1e30"/>
-  <!-- Card header -->
-  <rect x="124" y="96" width="264" height="68" rx="24" fill="#525252"/>
-  <rect x="124" y="136" width="264" height="28" fill="#525252"/>
-  <!-- Header title lines -->
-  <rect x="168" y="116" width="88" height="10" rx="5" fill="white" opacity="0.9"/>
-  <rect x="168" y="132" width="56" height="8" rx="4" fill="white" opacity="0.45"/>
-  <!-- Winner row highlight -->
-  <rect x="140" y="188" width="232" height="40" rx="8" fill="#16a34a" opacity="0.12"/>
-  <!-- Row 1 — winner (green) -->
-  <rect x="156" y="202" width="148" height="12" rx="6" fill="#16a34a" opacity="0.85"/>
-  <rect x="324" y="202" width="48" height="12" rx="6" fill="#16a34a"/>
-  <!-- Row 2 -->
-  <rect x="156" y="250" width="120" height="12" rx="6" fill="#3d3d3d"/>
-  <rect x="324" y="250" width="48" height="12" rx="6" fill="#3d3d3d"/>
-  <!-- Row 3 -->
-  <rect x="156" y="292" width="104" height="12" rx="6" fill="#3d3d3d"/>
-  <rect x="324" y="292" width="48" height="12" rx="6" fill="#3d3d3d"/>
-  <!-- Row 4 -->
-  <rect x="156" y="334" width="132" height="12" rx="6" fill="#3d3d3d"/>
-  <rect x="324" y="334" width="48" height="12" rx="6" fill="#3d3d3d"/>
+  <rect width="512" height="512" rx="110" fill="#0e0e18"/>
+  <line x1="148" y1="148" x2="148" y2="364" stroke="white" stroke-width="28" stroke-linecap="round"/>
+  <line x1="213" y1="148" x2="213" y2="364" stroke="white" stroke-width="28" stroke-linecap="round"/>
+  <line x1="278" y1="148" x2="278" y2="364" stroke="white" stroke-width="28" stroke-linecap="round"/>
+  <line x1="343" y1="148" x2="343" y2="364" stroke="white" stroke-width="28" stroke-linecap="round"/>
+  <line x1="100" y1="360" x2="400" y2="152" stroke="white" stroke-width="28" stroke-linecap="round"/>
 </svg>
