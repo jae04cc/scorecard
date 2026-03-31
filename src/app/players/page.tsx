@@ -84,7 +84,7 @@ export default function PlayersPage() {
           </div>
         ) : players.length === 0 ? (
           <div className="text-center py-20 px-8">
-            <div className="mx-auto mb-5 w-16 h-16 rounded-2xl bg-surface-card border border-slate-700/50 flex items-center justify-center">
+            <div className="mx-auto mb-5 w-16 h-16 rounded-2xl bg-surface-card flex items-center justify-center">
               <Trophy size={28} className="text-slate-500" />
             </div>
             <p className="text-slate-300 font-semibold">No stats yet</p>
@@ -109,7 +109,7 @@ export default function PlayersPage() {
               return (
                 <div
                   key={player.name}
-                  className="rounded-2xl bg-surface-card border border-slate-700/50 overflow-hidden"
+                  className="rounded-2xl border border-slate-700/50 bg-surface-card overflow-hidden"
                 >
                   {/* Main row */}
                   <button

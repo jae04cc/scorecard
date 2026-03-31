@@ -215,7 +215,7 @@ export default function HistoryPage() {
       <main className="flex-1 px-5 pb-10">
         {filtered.length === 0 ? (
           <div className="text-center py-20 px-8">
-            <div className="mx-auto mb-5 w-16 h-16 rounded-2xl bg-surface-card border border-slate-700/50 flex items-center justify-center">
+            <div className="mx-auto mb-5 w-16 h-16 rounded-2xl bg-surface-card flex items-center justify-center">
               {search || dateFrom || dateTo || filter !== "all"
                 ? <Search size={28} className="text-slate-500" />
                 : <Clock size={28} className="text-slate-500" />}

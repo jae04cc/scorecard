@@ -324,7 +324,7 @@ export default function AdminPage() {
                             onChange={(e) => set("oidc_client_secret", e.target.value)}
                             autoComplete="off"
                           />
-                          <div className="bg-surface/60 rounded-xl px-3 py-3 border border-slate-700/50">
+                          <div className="bg-surface/60 rounded-xl px-3 py-3">
                             <p className="text-xs text-slate-500 leading-relaxed">
                               Set the redirect URI in your OIDC provider to{" "}
                               <span className={cn(
