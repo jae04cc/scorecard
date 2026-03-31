@@ -206,8 +206,23 @@ export default function GameHistoryPage() {
           <HeaderActions />
         </div>
 
-        {/* Final standings podium */}
-        {winners.length > 0 && (
+        {/* Final standings podium — single-player: show won/lost banner */}
+        {activePlayers.length === 1 && "wonGame" in settings ? (
+          <div className={cn(
+            "rounded-2xl px-4 py-4 mb-3 flex flex-col items-center gap-1 text-center border",
+            settings.wonGame
+              ? "bg-success/20 border-success/40"
+              : "bg-surface-card border-slate-700/30"
+          )}>
+            <span className="text-3xl">{settings.wonGame ? "🏆" : "🏁"}</span>
+            <div className={cn("font-bold text-lg", settings.wonGame ? "text-success" : "text-slate-300")}>
+              {settings.wonGame ? "You won!" : "Better luck next time"}
+            </div>
+            <div className="text-sm text-slate-400">
+              {session.rounds.length} {game.roundName.toLowerCase()}{session.rounds.length !== 1 ? "s" : ""}
+            </div>
+          </div>
+        ) : winners.length > 0 && (
           <div className="bg-success/20 border border-success/40 rounded-2xl px-4 py-4 mb-3 flex flex-col items-center gap-1 text-center">
             <span className="text-3xl">🏆</span>
             <div className="font-bold text-success text-lg">{winningNames} won!</div>

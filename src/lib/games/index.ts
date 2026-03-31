@@ -3,6 +3,8 @@ import { spadesGame } from "./spades";
 import { casinoGame } from "./casino";
 import { skyjoGame } from "./skyjo";
 import { catchFiveGame } from "./catch-five";
+import { downforceGame } from "./downforce";
+import { customGame } from "./custom";
 // ---------------------------------------------------------------------------
 // Game Registry
 // To add a new game: import its definition here and add it to this array.
@@ -12,6 +14,8 @@ const gameRegistry: GameDefinition[] = [
   casinoGame,
   skyjoGame,
   catchFiveGame,
+  downforceGame,
+  customGame,
 ];
 
 export const games: ReadonlyMap<string, GameDefinition> = new Map(

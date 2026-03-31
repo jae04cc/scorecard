@@ -1,4 +1,4 @@
-import { Spade, Coins, Hand, Flag, Cloud, type LucideIcon } from "lucide-react";
+import { Spade, Coins, Hand, Flag, Cloud, Shuffle, type LucideIcon } from "lucide-react";
 
 type IconComponent = LucideIcon;
 
@@ -8,6 +8,7 @@ const ICONS: Record<string, IconComponent> = {
   skyjo: Cloud,
   "catch-five": Hand,
   downforce: Flag,
+  custom: Shuffle,
 };
 
 // Per-game colors for icon bubbles — use with style prop to avoid Tailwind purge issues
@@ -17,6 +18,7 @@ export const GAME_COLORS: Record<string, { bg: string; text: string }> = {
   skyjo:        { bg: "rgba(23,37,84,0.8)",   text: "#93c5fd" },  // dark blue / sky blue
   "catch-five": { bg: "rgba(78,52,0,0.8)",    text: "#fbbf24" },  // dark amber / yellow
   downforce:    { bg: "rgba(5,46,22,0.8)",    text: "#4ade80" },  // dark green / green
+  custom:       { bg: "rgba(51,51,51,0.8)",   text: "#d1d5db" },  // neutral grey
 };
 
 export function gameIconStyle(gameId: string): React.CSSProperties {
