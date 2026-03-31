@@ -23,6 +23,7 @@ import { ScoreTable } from "@/components/game/ScoreTable";
 import { StandingsBar } from "@/components/game/StandingsBar";
 import { RoundEntryModal } from "@/components/game/RoundEntryModal";
 import { CheatSheet } from "@/components/game/CheatSheet";
+import { DownforceScorecard } from "@/components/game/DownforceScorecard";
 import { computeStandings, getGame, type GameDefinition } from "@/lib/games";
 import { cn, formatDateTime, toProperCase, liveProperCase, findDuplicateName } from "@/lib/utils";
 
@@ -103,6 +104,16 @@ export default function GamePage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-accent border-t-transparent" />
       </div>
+    );
+  }
+
+  if (game.id === "downforce") {
+    return (
+      <DownforceScorecard
+        sessionId={sessionId}
+        session={session}
+        onRefresh={refresh}
+      />
     );
   }
 
