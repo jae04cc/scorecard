@@ -155,10 +155,10 @@ export default function ProfilePage() {
                 <img
                   src={session.user.image}
                   alt={displayName}
-                  className="w-20 h-20 rounded-full border border-slate-700/50"
+                  className="w-20 h-20 rounded-full"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-surface-card border border-slate-700/50 flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-surface-card flex items-center justify-center">
                   <User size={36} className="text-slate-500" />
                 </div>
               )}
@@ -249,7 +249,7 @@ export default function ProfilePage() {
 
             {/* Player stats */}
             {myStat && (
-              <div className="bg-surface-card rounded-2xl border border-slate-700/50 overflow-hidden">
+              <div className="bg-surface-card rounded-2xl overflow-hidden">
                 <div className="px-4 pt-4 pb-3 border-b border-slate-700/50">
                   <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Your Stats</div>
                   <div className="flex items-center gap-4">
@@ -340,7 +340,7 @@ export default function ProfilePage() {
           // ── Not signed in ──
           <div className="flex flex-col gap-4 py-8 max-w-sm mx-auto w-full">
             <div className="flex flex-col items-center gap-3 pb-2 text-center">
-              <div className="w-20 h-20 rounded-full bg-surface-card border border-slate-700/50 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-surface-card flex items-center justify-center">
                 <User size={36} className="text-slate-600" />
               </div>
               <div>

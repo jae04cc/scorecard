@@ -45,7 +45,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
       {/* Sheet — slides up from bottom on mobile, centered on desktop */}
       <div
         className={cn(
-          "relative z-10 w-full sm:max-w-lg bg-surface-card border border-slate-700/50",
+          "relative z-10 w-full sm:max-w-lg bg-surface-card",
           "rounded-t-3xl sm:rounded-2xl shadow-2xl",
           "max-h-[92vh] overflow-y-auto",
           className

@@ -249,7 +249,7 @@ export default function GameHistoryPage() {
 
         {/* Settings used (non-default only, collapsible) */}
         {nonDefaultSettings.length > 0 && (
-          <div className="bg-surface-card rounded-2xl border border-slate-700/50 overflow-hidden">
+          <div className="bg-surface-card rounded-2xl overflow-hidden">
             <button
               type="button"
               onClick={() => setShowSettings((v) => !v)}
