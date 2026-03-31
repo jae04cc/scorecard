@@ -113,6 +113,8 @@ export interface GameSetting {
   homePosition?: number;
   // Only show this setting when another setting equals a specific value
   showWhen?: { setting: string; value: unknown };
+  // If true, only show in the in-game settings modal, not on the new game screen
+  inGameOnly?: boolean;
 }
 
 // Full game definition — implement this interface to add a new game

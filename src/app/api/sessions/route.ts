@@ -115,14 +115,29 @@ export async function POST(req: NextRequest) {
       userId,
     });
 
+    // Compute team assignments: either from game definition or custom team sizes
+    const customTeamSizes = mergedSettings.customTeamSizes as number[] | undefined;
+    const teamForIndex = (idx: number): string | null => {
+      if (customTeamSizes && customTeamSizes.length > 0) {
+        let cursor = 0;
+        for (let t = 0; t < customTeamSizes.length; t++) {
+          if (idx < cursor + customTeamSizes[t]) return `Team ${t + 1}`;
+          cursor += customTeamSizes[t];
+        }
+        return null;
+      }
+      if ((game.supportsTeams || (game.teamsWhenPlayerCount && playerNames.length === game.teamsWhenPlayerCount)) && game.playersPerTeam) {
+        return `Team ${Math.floor(idx / game.playersPerTeam) + 1}`;
+      }
+      return null;
+    };
+
     const players = playerNames.map((name, idx) => ({
       id: generateId(),
       sessionId,
       name: name.trim(),
       position: idx,
-      team: (game.supportsTeams || (game.teamsWhenPlayerCount && playerNames.length === game.teamsWhenPlayerCount)) && game.playersPerTeam
-        ? `Team ${Math.floor(idx / game.playersPerTeam) + 1}`
-        : null,
+      team: teamForIndex(idx),
       active: true,
     }));
 

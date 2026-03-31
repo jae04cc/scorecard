@@ -70,6 +70,7 @@ export default function GamePage() {
   const [newPlayerName, setNewPlayerName] = useState("");
   const [endGameOpen, setEndGameOpen] = useState(false);
   const [endWinnerId, setEndWinnerId] = useState<string | null>(null);
+  const [endWonGame, setEndWonGame] = useState<boolean | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [localSettings, setLocalSettings] = useState<Record<string, unknown>>({});
@@ -212,9 +213,12 @@ export default function GamePage() {
   const handleEndGame = async () => {
     setActionLoading(true);
     try {
-      const updatedSettings = endWinnerId
-        ? JSON.stringify({ ...settings, manualWinnerId: endWinnerId })
-        : session.settings;
+      const isSinglePlayer = activePlayers.length === 1;
+      const updatedSettings = isSinglePlayer
+        ? JSON.stringify({ ...settings, wonGame: endWonGame ?? false })
+        : endWinnerId
+          ? JSON.stringify({ ...settings, manualWinnerId: endWinnerId })
+          : session.settings;
       await fetch(`/api/sessions/${sessionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -396,6 +400,51 @@ export default function GamePage() {
           );
         })()}
 
+        {/* Downforce single-player info card */}
+        {game.id === "downforce" && (
+          <div className="bg-surface-card rounded-2xl px-4 py-4 space-y-3">
+            <p className="text-xs text-slate-500 leading-relaxed">
+              This is a personal scorecard for tracking your own Downforce payouts — it's not intended to track everyone's scores simultaneously. Enter your auction spend via the{" "}
+              <span className="text-slate-400">⚙ settings</span> icon, add a checkpoint after each payout, then mark whether you won at the end. Win/loss results count toward your stats.
+            </p>
+            {/* Simplified Downforce scorecard illustration */}
+            <svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg" className="w-full opacity-40">
+              {/* Column headers */}
+              <line x1="10" y1="20" x2="270" y2="20" stroke="#94a3b8" strokeWidth="1"/>
+              <text x="15" y="15" fontSize="7" fill="#94a3b8" fontFamily="monospace">CAR #</text>
+              {[1,2,3,4,5].map((c, i) => (
+                <text key={c} x={70 + i * 40} y="15" fontSize="7" fill="#94a3b8" fontFamily="monospace" textAnchor="middle">#{c}</text>
+              ))}
+              {/* Betting card rows */}
+              {["BET A","BET B","BET C"].map((label, row) => (
+                <g key={label}>
+                  <line x1="10" y1={20 + (row+1)*22} x2="270" y2={20 + (row+1)*22} stroke="#334155" strokeWidth="0.5"/>
+                  <text x="15" y={20 + (row+1)*22 - 7} fontSize="6" fill="#64748b" fontFamily="monospace">{label}</text>
+                  {[1,2,3,4,5].map((c, i) => (
+                    <line key={c} x1={50 + i * 40} y1={20 + row*22 + 4} x2={90 + i * 40} y2={20 + row*22 + 4} stroke="#334155" strokeWidth="0.5"/>
+                  ))}
+                </g>
+              ))}
+              {/* Checkpoint rows */}
+              {["CP 1","CP 2","CP 3","FINAL"].map((label, row) => (
+                <g key={label}>
+                  <line x1="10" y1={86 + (row+1)*18} x2="270" y2={86 + (row+1)*18} stroke="#334155" strokeWidth="0.5"/>
+                  <text x="15" y={86 + (row+1)*18 - 5} fontSize="6" fill="#64748b" fontFamily="monospace">{label}</text>
+                  {[1,2,3,4,5].map((c, i) => (
+                    <rect key={c} x={50 + i * 40} y={86 + row*18 + 2} width="38" height="10" rx="1" fill="none" stroke="#334155" strokeWidth="0.5"/>
+                  ))}
+                </g>
+              ))}
+              {/* Net row */}
+              <line x1="10" y1="158" x2="270" y2="158" stroke="#94a3b8" strokeWidth="1"/>
+              <text x="15" y="155" fontSize="6" fill="#94a3b8" fontFamily="monospace" fontWeight="bold">NET</text>
+              {[1,2,3,4,5].map((c, i) => (
+                <rect key={c} x={50 + i * 40} y="145" width="38" height="11" rx="1" fill="none" stroke="#64748b" strokeWidth="0.75"/>
+              ))}
+            </svg>
+          </div>
+        )}
+
         {/* Cheat sheet */}
         {(() => {
           const sections = game.getCheatSheet
@@ -449,6 +498,7 @@ export default function GamePage() {
                 size="sm"
                 onClick={() => {
                   setEndWinnerId(null);
+                  setEndWonGame(null);
                   setEndGameOpen(true);
                 }}
                 className="shrink-0"
@@ -524,37 +574,57 @@ export default function GamePage() {
         </div>
       </Modal>
 
-      {/* End game — with optional winner override */}
+      {/* End game — single-player: did you win? / multi-player: optional winner override */}
       <Modal open={endGameOpen} onClose={() => setEndGameOpen(false)} title="End Game">
         <div className="space-y-4">
-          {!hasWinner && standings.length > 0 && (
+          {activePlayers.length === 1 ? (
             <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                Mark Winner <span className="text-slate-600 normal-case font-normal">(optional)</span>
-              </p>
-              <div className="space-y-1">
-                {standings.map((s) => (
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Did you win?</p>
+              <div className="flex gap-2">
+                {([true, false] as const).map((won) => (
                   <button
-                    key={s.playerId}
+                    key={String(won)}
                     type="button"
-                    onClick={() => setEndWinnerId(endWinnerId === s.playerId ? null : s.playerId)}
+                    onClick={() => setEndWonGame(endWonGame === won ? null : won)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all text-left",
-                      endWinnerId === s.playerId
-                        ? "border-accent bg-accent/10 text-white"
-                        : "border-slate-700 bg-surface-elevated text-slate-300"
+                      "flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all",
+                      endWonGame === won
+                        ? won ? "border-success bg-success/15 text-success" : "border-danger bg-danger/15 text-danger"
+                        : "border-slate-700 bg-surface-elevated text-slate-400"
                     )}
                   >
-                    <Crown
-                      size={14}
-                      className={endWinnerId === s.playerId ? "text-accent" : "text-slate-600"}
-                    />
-                    <span className="flex-1 text-sm font-medium">{s.team ? `${s.team} (${s.playerName})` : s.playerName}</span>
-                    <span className="font-mono text-xs text-slate-500">{s.total}</span>
+                    {won ? "🏆 Yes" : "Not this time"}
                   </button>
                 ))}
               </div>
             </div>
+          ) : (
+            !hasWinner && standings.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Mark Winner <span className="text-slate-600 normal-case font-normal">(optional)</span>
+                </p>
+                <div className="space-y-1">
+                  {standings.map((s) => (
+                    <button
+                      key={s.playerId}
+                      type="button"
+                      onClick={() => setEndWinnerId(endWinnerId === s.playerId ? null : s.playerId)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all text-left",
+                        endWinnerId === s.playerId
+                          ? "border-accent bg-accent/10 text-white"
+                          : "border-slate-700 bg-surface-elevated text-slate-300"
+                      )}
+                    >
+                      <Crown size={14} className={endWinnerId === s.playerId ? "text-accent" : "text-slate-600"} />
+                      <span className="flex-1 text-sm font-medium">{s.team ? `${s.team} (${s.playerName})` : s.playerName}</span>
+                      <span className="font-mono text-xs text-slate-500">{s.total}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
           )}
           <Button variant="secondary" onClick={() => setEndGameOpen(false)} className="w-full">
             Keep Playing

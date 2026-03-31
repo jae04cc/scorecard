@@ -33,6 +33,7 @@ interface GameInfo {
     minLabel?: string;
     homePosition?: number;
     showWhen?: { setting: string; value: unknown };
+    inGameOnly?: boolean;
   }>;
 }
 
@@ -48,6 +49,10 @@ function NewGameForm() {
   const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Custom game team state
+  const [customTeamCount, setCustomTeamCount] = useState<number>(0);
+  const [teamPlayers, setTeamPlayers] = useState<string[][]>([]);
 
   // User's first name for Player 1 prefill — fetch if session exists but firstName not yet in token
   const [userFirstName, setUserFirstName] = useState<string>(() => authSession?.user.firstName ?? "");
@@ -91,12 +96,41 @@ function NewGameForm() {
     setSelectedGameId(gameId);
     const defaults: Record<string, unknown> = {};
     for (const s of game.settings) {
-      // Plain number inputs start blank — default applied at submit time
       if (s.type === "number" && s.min === undefined) continue;
       defaults[s.key] = s.defaultValue;
     }
     setSettings(defaults);
     setPlayerNames(Array(game.minPlayers).fill(""));
+    setCustomTeamCount(0);
+    setTeamPlayers([]);
+  };
+
+  const handleCustomTeamCountChange = (count: number) => {
+    setCustomTeamCount(count);
+    if (count === 0) {
+      setTeamPlayers([]);
+    } else {
+      setTeamPlayers(Array.from({ length: count }, () => [""]));
+    }
+  };
+
+  const addTeamPlayer = (teamIdx: number) => {
+    setTeamPlayers((prev) => prev.map((t, i) => i === teamIdx ? [...t, ""] : t));
+  };
+
+  const removeTeamPlayer = (teamIdx: number, playerIdx: number) => {
+    setTeamPlayers((prev) => prev.map((t, i) => {
+      if (i !== teamIdx) return t;
+      if (t.length <= 1) return t;
+      return t.filter((_, pi) => pi !== playerIdx);
+    }));
+  };
+
+  const setTeamPlayerName = (teamIdx: number, playerIdx: number, name: string) => {
+    setTeamPlayers((prev) => prev.map((t, i) => {
+      if (i !== teamIdx) return t;
+      return t.map((p, pi) => pi === playerIdx ? liveProperCase(name) : p);
+    }));
   };
 
   const addPlayer = () => {
@@ -122,7 +156,23 @@ function NewGameForm() {
       return;
     }
 
-    const filled = playerNames.map((n, i) => toProperCase(n) || (i === 0 && userFirstName ? userFirstName : `Player ${i + 1}`));
+    // Build flat player list and team sizes for custom team mode
+    let filled: string[];
+    let customTeamSizes: number[] | undefined;
+    if (selectedGame.id === "custom" && customTeamCount > 0) {
+      let globalCounter = 1;
+      const allTeamFilled = teamPlayers.map((team) =>
+        team.map((n) => toProperCase(n) || `Player ${globalCounter++}`)
+      );
+      filled = allTeamFilled.flat();
+      customTeamSizes = allTeamFilled.map((t) => t.length);
+      if (filled.length < 2) {
+        setError("Add at least 2 players total.");
+        return;
+      }
+    } else {
+      filled = playerNames.map((n, i) => toProperCase(n) || (i === 0 && userFirstName ? userFirstName : `Player ${i + 1}`));
+    }
 
     const dup = findDuplicateName(filled);
     if (dup) {
@@ -132,13 +182,13 @@ function NewGameForm() {
 
     setLoading(true);
     try {
-      // Fill in defaults for any number settings left blank
       const resolvedSettings: Record<string, unknown> = { ...settings };
       for (const s of selectedGame.settings) {
         if (s.type === "number" && resolvedSettings[s.key] === undefined) {
           resolvedSettings[s.key] = s.defaultValue;
         }
       }
+      if (customTeamSizes) resolvedSettings.customTeamSizes = customTeamSizes;
 
       const res = await fetch("/api/sessions", {
         method: "POST",
@@ -182,7 +232,7 @@ function NewGameForm() {
           <label className="text-xs font-bold uppercase tracking-widest text-slate-500 block mb-3">
             Choose Game
           </label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {games.map((game) => (
               <button
                 key={game.id}
@@ -201,14 +251,91 @@ function NewGameForm() {
           </div>
         </div>
 
-        {/* Players */}
-        {selectedGame && (
+        {/* Custom game team mode selector */}
+        {selectedGame?.id === "custom" && (
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest text-slate-500 block mb-3">Teams</label>
+            <div className="flex gap-2">
+              {([0, 2, 3, 4] as const).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => handleCustomTeamCountChange(n)}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl text-sm font-semibold transition-all border",
+                    customTeamCount === n
+                      ? "border-accent bg-accent/10 text-white"
+                      : "border-slate-700/50 bg-surface-card text-slate-400"
+                  )}
+                >
+                  {n === 0 ? "None" : `${n} Teams`}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Custom game team player inputs */}
+        {selectedGame?.id === "custom" && customTeamCount > 0 && (
+          <div className="space-y-3">
+            {teamPlayers.map((team, teamIdx) => (
+              <div key={teamIdx} className="rounded-2xl bg-surface-card overflow-hidden">
+                <div className="px-4 py-2 bg-surface-elevated border-b border-slate-700/50">
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Team {teamIdx + 1}</span>
+                </div>
+                <div className="p-3 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    {team.map((name, pi) => {
+                      const globalIdx = teamPlayers.slice(0, teamIdx).reduce((sum, t) => sum + t.length, 0) + pi;
+                      return (
+                      <div key={pi} className="flex gap-1">
+                        <Input
+                          placeholder={`Player ${globalIdx + 1}`}
+                          value={name}
+                          onChange={(e) => setTeamPlayerName(teamIdx, pi, e.target.value)}
+                          className="flex-1"
+                          autoComplete="off"
+                        />
+                        {team.length > 1 && (
+                          <button onClick={() => removeTeamPlayer(teamIdx, pi)} className="p-2 text-slate-600 active:text-danger">
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => addTeamPlayer(teamIdx)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-slate-700 text-slate-500 text-sm"
+                  >
+                    <Plus size={14} />
+                    Add Player
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Players — hidden for custom game when team mode is active */}
+        {selectedGame && !(selectedGame.id === "custom" && customTeamCount > 0) && (
           <div>
             <label className="text-xs font-bold uppercase tracking-widest text-slate-500 block mb-3">
-              Players ({playerNames.length}/{selectedGame.maxPlayers})
+              {selectedGame.maxPlayers === 1 ? "Your Name" : `Players (${playerNames.length}/${selectedGame.maxPlayers})`}
             </label>
 
             {(() => {
+              // Single player — just one full-width input, no add/remove
+              if (selectedGame.maxPlayers === 1) {
+                return (
+                  <Input
+                    placeholder={userFirstName || "Your name"}
+                    value={playerNames[0] ?? ""}
+                    onChange={(e) => setPlayerName(0, e.target.value)}
+                    autoComplete="off"
+                  />
+                );
+              }
               const isTeamMode = selectedGame.playersPerTeam && (
                 selectedGame.supportsTeams ||
                 (selectedGame.teamsWhenPlayerCount !== undefined && playerNames.length === selectedGame.teamsWhenPlayerCount)
@@ -357,14 +484,14 @@ function NewGameForm() {
         )}
 
         {/* Game settings */}
-        {selectedGame && selectedGame.settings.length > 0 && (
+        {selectedGame && selectedGame.settings.some((s) => !s.inGameOnly) && (
           <div>
             <label className="text-xs font-bold uppercase tracking-widest text-slate-500 block mb-3">
               Settings
             </label>
             <div className="space-y-3">
               {selectedGame.settings.filter((s) =>
-                !s.showWhen || settings[s.showWhen.setting] === s.showWhen.value
+                !s.inGameOnly && (!s.showWhen || settings[s.showWhen.setting] === s.showWhen.value)
               ).map((s) => {
                 const isPicker = s.type === "number" && s.min !== undefined && s.max !== undefined;
                 return (

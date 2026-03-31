@@ -127,34 +127,30 @@ export default function HomePage() {
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
             New Game
           </h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {games.map((game) => (
               <button
                 key={game.id}
                 onClick={() => handleGameClick(game.id)}
               >
                 <Card className={cn(
-                  "transition-all active:scale-[0.98] h-full",
-                  isWalled
-                    ? "opacity-50"
-                    : ""
+                  "transition-all active:scale-[0.98]",
+                  isWalled ? "opacity-50" : ""
                 )}>
-                  <CardBody className="p-3 items-center text-center">
+                  <div className="flex flex-col items-center text-center p-3 gap-2">
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center mb-2"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                       style={gameIconStyle(game.id)}
                     >
                       <GameIcon gameId={game.id} size={22} strokeWidth={1.5} fallback={game.emoji} />
                     </div>
-                    <div className="font-bold text-white text-sm leading-tight mb-0.5">
-                      {game.name}
+                    <div>
+                      <div className="font-bold text-white text-sm leading-tight">{game.name}</div>
+                      <div className="text-xs text-slate-500">
+                        {game.minPlayers === game.maxPlayers ? `${game.minPlayers}p` : `${game.minPlayers}–${game.maxPlayers}p`}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {game.minPlayers === game.maxPlayers
-                        ? `${game.minPlayers}p`
-                        : `${game.minPlayers}–${game.maxPlayers}p`}
-                    </div>
-                  </CardBody>
+                  </div>
                 </Card>
               </button>
             ))}
