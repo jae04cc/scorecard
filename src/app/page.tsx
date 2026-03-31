@@ -157,8 +157,21 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Recent games — only shown when not walled */}
-        {!isWalled && recentSessions.length > 0 && (
+        {/* Recent games or sign-in prompt */}
+        {isWalled ? (
+          <section>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+              Recent Games
+            </h2>
+            <button
+              onClick={() => signIn("oidc", { callbackUrl: "/" })}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent text-white font-bold text-sm"
+            >
+              <LogIn size={16} />
+              Sign In to Play
+            </button>
+          </section>
+        ) : recentSessions.length > 0 ? (
           <section>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
@@ -222,24 +235,8 @@ export default function HomePage() {
               })}
             </div>
           </section>
-        )}
+        ) : null}
       </main>
-
-      {/* Sign-in prompt when walled */}
-      {isWalled && (
-        <footer className="px-5 pb-8 space-y-3" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}>
-          <p className="text-center text-xs text-slate-500">
-            Sign in to start tracking games
-          </p>
-          <button
-            onClick={() => signIn("oidc", { callbackUrl: "/" })}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent text-white font-bold text-sm transition-colors"
-          >
-            <LogIn size={16} />
-            Sign In
-          </button>
-        </footer>
-      )}
     </div>
   );
 }
