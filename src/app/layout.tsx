@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProvider } from "@/components/SessionProvider";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { DevBanner } from "@/components/ui/DevBanner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen text-neutral-100 antialiased">
         <SessionProvider>
+          <DevBanner />
           <div className="mx-auto max-w-2xl min-h-screen flex flex-col">
             {children}
           </div>

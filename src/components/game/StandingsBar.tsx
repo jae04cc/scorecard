@@ -1,7 +1,35 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Standing } from "@/lib/games/types";
 import { Trophy } from "lucide-react";
+
+function AnimatedNumber({ value }: { value: number }) {
+  const [display, setDisplay] = useState(value);
+  const prevRef = useRef(value);
+  const rafRef = useRef<number | undefined>(undefined);
+  const startRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const from = prevRef.current;
+    const to = value;
+    prevRef.current = to;
+    if (from === to) return;
+    if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current);
+    startRef.current = undefined;
+    const animate = (ts: number) => {
+      if (startRef.current === undefined) startRef.current = ts;
+      const t = Math.min((ts - startRef.current) / 500, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.round(from + (to - from) * eased));
+      if (t < 1) rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current); };
+  }, [value]);
+
+  return <>{display}</>;
+}
 
 interface StandingsBarProps {
   standings: Standing[];
@@ -64,7 +92,7 @@ export function StandingsBar({ standings, winConditionType, targetScore, lowestW
                     isLeading ? "text-white" : "text-slate-300"
                   )}
                 >
-                  {s.total}
+                  <AnimatedNumber value={s.total} />
                 </span>
               </div>
             </div>
