@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   title: "Scorecard",
   description: "Track scores for your favorite games",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black",
