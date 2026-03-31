@@ -126,9 +126,11 @@ export default function GamePage() {
   const standings = computeStandings(game, activePlayers, allScores, settings);
 
   const winCondition = game.winCondition;
-  const targetScore =
+  const targetScoreFromSettings =
     (game.targetScoreSettingKey ? (settings[game.targetScoreSettingKey] as number | undefined) : undefined) ??
-    (settings["targetScore"] as number | undefined) ??
+    (settings["targetScore"] as number | undefined);
+  const targetScore =
+    (targetScoreFromSettings && targetScoreFromSettings > 0 ? targetScoreFromSettings : undefined) ??
     (winCondition.type === "target" || winCondition.type === "highest" || winCondition.type === "lowest"
       ? (winCondition as { targetScore?: number }).targetScore
       : undefined);
