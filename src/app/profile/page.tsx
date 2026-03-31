@@ -75,23 +75,17 @@ export default function ProfilePage() {
     }
   }, [isOidc]);
 
-  // Fetch player stats once we know the display name
+  // Fetch player stats once session is known — match on session name only
   useEffect(() => {
-    if (!session) return;
+    if (!session?.user.name) return;
+    const target = session.user.name.toLowerCase();
     fetch("/api/players/stats")
       .then((r) => r.json())
       .then((all: PlayerStat[]) => {
-        // Match by display name (case-insensitive). Try profile-derived name first, fall back to session name.
-        const target = (
-          profile
-            ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") || profile.name || session.user.name
-            : session.user.name
-        )?.toLowerCase();
         const found = all.find((p) => p.name.toLowerCase() === target);
         setMyStat(found ?? null);
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user.name, profile]);
+  }, [session?.user.name]);
 
   const handleLocalSignIn = async () => {
     setLocalError(null);
