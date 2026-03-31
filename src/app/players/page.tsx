@@ -109,7 +109,7 @@ export default function PlayersPage() {
               return (
                 <div
                   key={player.name}
-                  className="rounded-2xl border border-slate-700/50 bg-surface-card overflow-hidden"
+                  className="rounded-2xl bg-surface-card overflow-hidden"
                 >
                   {/* Main row */}
                   <button

@@ -11,8 +11,8 @@ const config: Config = {
       colors: {
         surface: {
           DEFAULT: "#0e0e18",
-          card: "#1e1e30",
-          elevated: "#262640",
+          card: "#2a2a42",
+          elevated: "#323252",
         },
         accent: {
           DEFAULT: "#525252",

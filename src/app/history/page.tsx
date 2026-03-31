@@ -245,7 +245,7 @@ export default function HistoryPage() {
                   href={s.status === "active" ? `/game/${s.id}` : `/history/${s.id}`}
                   className="block"
                 >
-                  <Card className={`transition-all active:scale-[0.99] cursor-pointer ${s.status === "active" ? "border-success/40" : ""}`}>
+                  <Card className={`transition-all active:scale-[0.99] cursor-pointer ${s.status === "active" ? "ring-1 ring-success/40" : ""}`}>
                     <CardBody>
                       <div className="flex items-center gap-3">
                         <div

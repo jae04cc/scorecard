@@ -8,7 +8,7 @@ export function Card({ className, elevated, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-slate-700/50",
+        "rounded-2xl",
         elevated ? "bg-surface-elevated/70" : "bg-surface-card/70",
         className
       )}
