@@ -361,14 +361,15 @@ export default function GamePage() {
       <main className="flex-1 px-4 py-4 space-y-4 overflow-x-hidden">
         {/* Win notification */}
         {hasWinner && session.status === "active" && (() => {
-          const winningNames = standings
-            .filter((s) => s.isWinning)
-            .map((s) => s.playerName)
-            .join(" & ");
+          const winners = standings.filter((s) => s.isWinning);
+          const winningNames = winners.map((s) => s.playerName).join(" & ");
+          const isTie = winners.length > 1;
           return (
             <div className="bg-success/20 border border-success/40 rounded-2xl px-4 py-4 flex flex-col items-center gap-1 text-center">
-              <span className="text-3xl">🏆</span>
-              <div className="font-bold text-success text-lg">{winningNames} won!</div>
+              <span className="text-3xl">{isTie ? "🤝" : "🏆"}</span>
+              <div className="font-bold text-success text-lg">
+                {isTie ? `${winningNames} are tied for the win!` : `${winningNames} won!`}
+              </div>
             </div>
           );
         })()}

@@ -78,7 +78,7 @@ export function computeStandings(
       // Rank 1 (lowest) wins only once the game is over
       standings[i].isWinning = rank === 1 && gameOver;
     } else {
-      standings[i].isWinning = rank === 1 && (targetScore === undefined || standings[i].total >= targetScore);
+      standings[i].isWinning = rank === 1 && scores.length > 0 && (targetScore === undefined || standings[i].total >= targetScore);
     }
   }
 
