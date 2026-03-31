@@ -1,50 +1,68 @@
 import type { GameDefinition } from "./types";
 
+const RACING_PAYOUTS = [12, 9, 6, 4, 2, 0]; // index 0 = 1st place
+const BETTING_PAYOUTS = [
+  [9, 6, 3, 0, 0, 0], // Bet 1
+  [6, 4, 2, 0, 0, 0], // Bet 2
+  [3, 2, 1, 0, 0, 0], // Bet 3
+];
+
 export const downforceGame: GameDefinition = {
   id: "downforce",
   name: "Downforce",
-  description: "Track your own checkpoint payouts minus auction spend.",
+  description: "Personal scorecard — track your auction spend, bets, and racing payouts.",
   minPlayers: 1,
   maxPlayers: 1,
   supportsTeams: false,
-  roundName: "Checkpoint",
+  roundName: "Phase",
   color: "bg-red-600",
   emoji: "🏎️",
 
   winCondition: {
     type: "highest",
-    description: "Did you end up with more money than you spent?",
+    description: "Earn the most after subtracting auction spend",
   },
 
   scoreEntry: {
     type: "simple",
-    label: "Payout ($)",
-    allowNegative: false,
-    textInput: true,
+    label: "Score",
+    allowNegative: true,
   },
 
-  computeStandings: (players, scores, settings) => {
-    const auctionSpend = (settings["auctionSpend"] as number) ?? 0;
-    const total = scores.reduce((sum, s) => sum + s.score, 0) - auctionSpend;
+  // Reads from df_ settings keys written by DownforceScorecard
+  computeStandings: (players, _scores, settings) => {
+    const ownedCars: string[] = JSON.parse((settings["df_ownedCars"] as string) ?? "[]");
+    const costs: Record<string, number> = JSON.parse((settings["df_costs"] as string) ?? "{}");
+    const bets = [
+      settings["df_bet1"] as string | undefined,
+      settings["df_bet2"] as string | undefined,
+      settings["df_bet3"] as string | undefined,
+    ];
+    const places: Record<string, number> = JSON.parse((settings["df_places"] as string) ?? "{}");
+
+    const racingTotal = ownedCars.reduce((sum, car) => {
+      const place = places[car];
+      return sum + (place >= 1 && place <= 6 ? RACING_PAYOUTS[place - 1] : 0);
+    }, 0);
+
+    const bettingTotal = bets.reduce((sum, bet, i) => {
+      if (!bet || !places[bet]) return sum;
+      const place = places[bet];
+      return sum + (place >= 1 && place <= 6 ? BETTING_PAYOUTS[i][place - 1] : 0);
+    }, 0);
+
+    const auctionTotal = Object.values(costs).reduce((s, c) => s + c, 0);
+    const net = racingTotal + bettingTotal - auctionTotal;
+
     return players.map((p) => ({
       playerId: p.id,
       playerName: p.name,
       team: p.team,
-      total,
+      total: net,
       rank: 1,
-      isWinning: false,
+      isWinning: net > 0,
     }));
   },
 
-  // auctionSpend is entered in-game via the settings gear, not on the new game screen
-  settings: [
-    {
-      key: "auctionSpend",
-      label: "Auction Spend ($)",
-      description: "How much you spent buying cars at auction",
-      type: "number",
-      defaultValue: 0,
-      inGameOnly: true,
-    },
-  ],
+  settings: [],
 };
