@@ -47,7 +47,7 @@ export const customGame: GameDefinition = {
     for (let i = 0; i < standings.length; i++) {
       if (i > 0 && standings[i].total !== standings[i - 1].total) rank = i + 1;
       standings[i].rank = rank;
-      standings[i].isWinning = rank === 1;
+      standings[i].isWinning = rank === 1 && scores.length > 0;
     }
 
     return standings;
