@@ -274,7 +274,7 @@ export function DownforceScorecard({ sessionId, session, onRefresh }: Props) {
 
     return (
       <div key={betNum} className={cn("rounded-2xl bg-surface-card overflow-hidden", locked && "opacity-40")}>
-        <PhaseHeader number={betNum + 1} title={`Bet ${betNum}`} done={done} />
+        <PhaseHeader number={betNum + 1} title={`Bet ${betNum}`} done={done} onEdit={done && !locked ? () => setEditingPhase(betNum) : undefined} />
         {isFormMode(betNum) && !locked && (
           <div className="p-4 space-y-3">
             <p className="text-xs text-slate-500">Which car do you think will win the race?</p>
