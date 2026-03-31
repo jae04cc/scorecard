@@ -223,7 +223,7 @@ function NewGameForm() {
                     const start = teamIdx * selectedGame.playersPerTeam!;
                     const members = playerNames.slice(start, start + selectedGame.playersPerTeam!);
                     return (
-                      <div key={teamIdx} className="rounded-2xl border border-slate-700/50 bg-surface-card overflow-hidden">
+                      <div key={teamIdx} className="rounded-2xl bg-surface-card overflow-hidden">
                         <div className="px-4 py-2 bg-surface-elevated border-b border-slate-700/50">
                           <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
                             Team {teamNumber}

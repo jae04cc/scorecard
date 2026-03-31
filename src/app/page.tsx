@@ -182,7 +182,7 @@ export default function HomePage() {
                   <Link key={s.id} href={href} className="block">
                     <Card className={cn(
                       "transition-all",
-                      isActive ? "border-success/40" : ""
+                      isActive ? "ring-1 ring-success/40" : ""
                     )}>
                       <CardBody>
                         <div className="flex items-center gap-3">

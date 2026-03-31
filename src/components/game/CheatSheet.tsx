@@ -15,7 +15,7 @@ export function CheatSheet({ sections, gameName }: CheatSheetProps) {
   if (sections.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-slate-700/50 bg-surface-card overflow-hidden">
+    <div className="rounded-2xl bg-surface-card overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors"
