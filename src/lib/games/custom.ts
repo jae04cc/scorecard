@@ -26,6 +26,10 @@ export const customGame: GameDefinition = {
 
   computeStandings: (players, scores, settings) => {
     const lowerWins = settings["lowerWins"] === true;
+    const targetScore = typeof settings["targetScore"] === "number" && (settings["targetScore"] as number) > 0
+      ? (settings["targetScore"] as number)
+      : undefined;
+
     const totals = new Map<string, number>();
     for (const p of players) totals.set(p.id, 0);
     for (const s of scores) {
@@ -47,13 +51,21 @@ export const customGame: GameDefinition = {
     for (let i = 0; i < standings.length; i++) {
       if (i > 0 && standings[i].total !== standings[i - 1].total) rank = i + 1;
       standings[i].rank = rank;
-      standings[i].isWinning = rank === 1 && scores.length > 0;
+      standings[i].isWinning = rank === 1 && scores.length > 0 &&
+        (targetScore === undefined || standings[i].total >= targetScore);
     }
 
     return standings;
   },
 
   settings: [
+    {
+      key: "targetScore",
+      label: "Winning Score",
+      description: "First to reach this score wins. Leave at 0 for no limit.",
+      type: "number",
+      defaultValue: 0,
+    },
     {
       key: "lowerWins",
       label: "Lower score wins",
