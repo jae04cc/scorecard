@@ -214,9 +214,20 @@ export default function HistoryPage() {
 
       <main className="flex-1 px-5 pb-10">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-slate-500">
-            <Clock size={40} className="mx-auto mb-3 opacity-30" />
-            <p>No games found.</p>
+          <div className="text-center py-20 px-8">
+            <div className="mx-auto mb-5 w-16 h-16 rounded-2xl bg-surface-card border border-slate-700/50 flex items-center justify-center">
+              {search || dateFrom || dateTo || filter !== "all"
+                ? <Search size={28} className="text-slate-500" />
+                : <Clock size={28} className="text-slate-500" />}
+            </div>
+            <p className="text-slate-300 font-semibold">
+              {search || dateFrom || dateTo || filter !== "all" ? "No matches" : "No games yet"}
+            </p>
+            <p className="text-slate-600 text-sm mt-1">
+              {search || dateFrom || dateTo || filter !== "all"
+                ? "Try adjusting your filters or search terms"
+                : "Start a game to see your history here"}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">

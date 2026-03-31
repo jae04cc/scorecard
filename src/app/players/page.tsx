@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, ChevronUp, Swords } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Swords, Trophy } from "lucide-react";
 import { HeaderActions } from "@/components/ui/HeaderActions";
 import { GameIcon } from "@/components/ui/GameIcon";
 
@@ -83,9 +83,12 @@ export default function PlayersPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-accent border-t-transparent" />
           </div>
         ) : players.length === 0 ? (
-          <div className="text-center py-16 text-slate-500">
-            <div className="text-4xl mb-3">🏆</div>
-            <p>No completed games yet.</p>
+          <div className="text-center py-20 px-8">
+            <div className="mx-auto mb-5 w-16 h-16 rounded-2xl bg-surface-card border border-slate-700/50 flex items-center justify-center">
+              <Trophy size={28} className="text-slate-500" />
+            </div>
+            <p className="text-slate-300 font-semibold">No stats yet</p>
+            <p className="text-slate-600 text-sm mt-1">Complete a game to see the leaderboard</p>
           </div>
         ) : (
           <div className="space-y-2">

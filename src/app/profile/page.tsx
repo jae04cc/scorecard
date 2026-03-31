@@ -2,12 +2,33 @@
 import { useEffect, useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, User, LogIn, LogOut, Shield, KeyRound, ChevronDown, Pencil, Check } from "lucide-react";
+import { ArrowLeft, User, LogIn, LogOut, Shield, KeyRound, ChevronDown, Pencil, Check, Swords } from "lucide-react";
 import { HeaderActions } from "@/components/ui/HeaderActions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { GameIcon } from "@/components/ui/GameIcon";
 import { cn } from "@/lib/utils";
+
+interface GameBreakdown {
+  gameId: string;
+  gameName: string;
+  gameEmoji: string;
+  wins: number;
+  losses: number;
+  totalGames: number;
+  avgScore: number | null;
+}
+interface H2HRecord { opponent: string; wins: number; losses: number; }
+interface PlayerStat {
+  name: string;
+  wins: number;
+  losses: number;
+  totalGames: number;
+  winPct: number;
+  byGame: GameBreakdown[];
+  h2h: H2HRecord[];
+}
 
 interface UserProfile {
   firstName: string | null;
@@ -29,6 +50,10 @@ export default function ProfilePage() {
   const [localError, setLocalError] = useState<string | null>(null);
   const [localLoading, setLocalLoading] = useState(false);
 
+  // Stats
+  const [myStat, setMyStat] = useState<PlayerStat | null>(null);
+  const [statsSection, setStatsSection] = useState<"games" | "h2h">("games");
+
   // Name editing state
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [editingName, setEditingName] = useState(false);
@@ -49,6 +74,24 @@ export default function ProfilePage() {
         });
     }
   }, [isOidc]);
+
+  // Fetch player stats once we know the display name
+  useEffect(() => {
+    if (!session) return;
+    fetch("/api/players/stats")
+      .then((r) => r.json())
+      .then((all: PlayerStat[]) => {
+        // Match by display name (case-insensitive). Try profile-derived name first, fall back to session name.
+        const target = (
+          profile
+            ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") || profile.name || session.user.name
+            : session.user.name
+        )?.toLowerCase();
+        const found = all.find((p) => p.name.toLowerCase() === target);
+        setMyStat(found ?? null);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user.name, profile]);
 
   const handleLocalSignIn = async () => {
     setLocalError(null);
@@ -205,6 +248,90 @@ export default function ProfilePage() {
                     <p className="text-slate-600 text-xs">
                       Once set, this overrides your SSO display name.
                     </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Player stats */}
+            {myStat && (
+              <div className="bg-surface-card rounded-2xl border border-slate-700/50 overflow-hidden">
+                <div className="px-4 pt-4 pb-3 border-b border-slate-700/50">
+                  <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Your Stats</div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-center flex-1">
+                      <div className="text-2xl font-black text-success">{myStat.wins}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">Wins</div>
+                    </div>
+                    <div className="text-center flex-1">
+                      <div className="text-2xl font-black text-danger">{myStat.losses}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">Losses</div>
+                    </div>
+                    <div className="text-center flex-1">
+                      <div className="text-2xl font-black text-slate-200">{Math.round(myStat.winPct * 100)}%</div>
+                      <div className="text-xs text-slate-500 mt-0.5">Win rate</div>
+                    </div>
+                    <div className="text-center flex-1">
+                      <div className="text-2xl font-black text-slate-200">{myStat.totalGames}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">Games</div>
+                    </div>
+                  </div>
+                </div>
+                {/* Section tabs */}
+                <div className="flex border-b border-slate-700/50">
+                  <button
+                    onClick={() => setStatsSection("games")}
+                    className={cn("flex-1 py-2 text-xs font-semibold transition-colors", statsSection === "games" ? "text-accent border-b-2 border-accent" : "text-slate-500")}
+                  >
+                    By Game
+                  </button>
+                  {myStat.h2h.length > 0 && (
+                    <button
+                      onClick={() => setStatsSection("h2h")}
+                      className={cn("flex-1 py-2 text-xs font-semibold transition-colors flex items-center justify-center gap-1", statsSection === "h2h" ? "text-accent border-b-2 border-accent" : "text-slate-500")}
+                    >
+                      <Swords size={11} />
+                      Head-to-Head
+                    </button>
+                  )}
+                </div>
+                {statsSection === "games" && (
+                  <div className="px-4 py-3 space-y-2">
+                    {myStat.byGame.map((g) => (
+                      <div key={g.gameId} className="flex items-center gap-2">
+                        <span className="w-6 flex items-center justify-center text-slate-400">
+                          <GameIcon gameId={g.gameId} size={14} strokeWidth={1.5} fallback={g.gameEmoji} />
+                        </span>
+                        <span className="flex-1 text-sm text-slate-300">{g.gameName}</span>
+                        <span className="font-mono text-sm text-success w-8 text-center">{g.wins}</span>
+                        <span className="text-slate-600 text-xs">–</span>
+                        <span className="font-mono text-sm text-danger w-8 text-center">{g.losses}</span>
+                        <span className="font-mono text-xs text-slate-500 w-10 text-right">
+                          {Math.round((g.wins / g.totalGames) * 100)}%
+                        </span>
+                        {g.avgScore !== null && (
+                          <span className="font-mono text-xs text-slate-600 w-14 text-right">avg {g.avgScore}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {statsSection === "h2h" && (
+                  <div className="px-4 py-3 space-y-2">
+                    <p className="text-xs text-slate-600 mb-1">Games played directly against each opponent</p>
+                    {myStat.h2h.map((r) => {
+                      const total = r.wins + r.losses;
+                      const pct = total > 0 ? r.wins / total : 0;
+                      return (
+                        <div key={r.opponent} className="flex items-center gap-2">
+                          <span className="flex-1 text-sm text-slate-300">{r.opponent}</span>
+                          <span className="font-mono text-sm text-success w-8 text-center">{r.wins}</span>
+                          <span className="text-slate-600 text-xs">–</span>
+                          <span className="font-mono text-sm text-danger w-8 text-center">{r.losses}</span>
+                          <span className="font-mono text-xs text-slate-500 w-10 text-right">{Math.round(pct * 100)}%</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
