@@ -34,6 +34,7 @@ export default function HomePage() {
   const [authEnabled, setAuthEnabled] = useState<boolean | null>(null);
   const [games, setGames] = useState<GameInfo[]>([]);
   const [recentSessions, setRecentSessions] = useState<SessionSummary[]>([]);
+  const [showLoginHint, setShowLoginHint] = useState(false);
 
   useEffect(() => {
     fetch("/api/config").then((r) => r.json()).then((d) => setAuthEnabled(d.authEnabled));
@@ -54,7 +55,7 @@ export default function HomePage() {
 
   const handleGameClick = (gameId: string) => {
     if (isWalled) {
-      router.push("/profile");
+      setShowLoginHint(true);
     } else {
       router.push(`/new?game=${gameId}`);
     }
@@ -78,46 +79,36 @@ export default function HomePage() {
             <h1 className="text-3xl font-black tracking-tight text-white">Scorecard</h1>
             <p className="text-slate-400 text-sm mt-0.5">Track any game, any time</p>
           </div>
-          <div className="flex items-center gap-1">
-            {/* When walled: only show profile icon */}
-            {isWalled ? (
+          {!isWalled && (
+            <div className="flex items-center gap-1">
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="p-2 rounded-xl text-slate-400 transition-colors"
+                >
+                  <Settings size={22} />
+                </Link>
+              )}
               <Link
                 href="/profile"
                 className="p-2 rounded-xl text-slate-400 transition-colors"
               >
                 <User size={22} />
               </Link>
-            ) : (
-              <>
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="p-2 rounded-xl text-slate-400 transition-colors"
-                  >
-                    <Settings size={22} />
-                  </Link>
-                )}
-                <Link
-                  href="/profile"
-                  className="p-2 rounded-xl text-slate-400 transition-colors"
-                >
-                  <User size={22} />
-                </Link>
-                <Link
-                  href="/players"
-                  className="p-2 rounded-xl text-slate-400 transition-colors"
-                >
-                  <Medal size={22} />
-                </Link>
-                <Link
-                  href="/history"
-                  className="p-2 rounded-xl text-slate-400 transition-colors"
-                >
-                  <Clock size={22} />
-                </Link>
-              </>
-            )}
-          </div>
+              <Link
+                href="/players"
+                className="p-2 rounded-xl text-slate-400 transition-colors"
+              >
+                <Medal size={22} />
+              </Link>
+              <Link
+                href="/history"
+                className="p-2 rounded-xl text-slate-400 transition-colors"
+              >
+                <Clock size={22} />
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 
@@ -159,10 +150,15 @@ export default function HomePage() {
 
         {/* Recent games or sign-in prompt */}
         {isWalled ? (
-          <section>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+          <section className="space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">
               Recent Games
             </h2>
+            {showLoginHint && (
+              <p className="text-center text-sm text-slate-400">
+                Sign in to start tracking games
+              </p>
+            )}
             <button
               onClick={() => signIn("oidc", { callbackUrl: "/" })}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent text-white font-bold text-sm"

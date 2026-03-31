@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/SessionProvider";
+import { AuthGuard } from "@/components/AuthGuard";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { DevBanner } from "@/components/ui/DevBanner";
@@ -39,12 +40,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen text-neutral-100 antialiased">
         <SessionProvider>
-          <DevBanner />
-          <div className="mx-auto max-w-2xl min-h-screen flex flex-col">
-            {children}
-          </div>
-          <InstallPrompt />
-          <ServiceWorkerRegistration />
+          <AuthGuard>
+            <DevBanner />
+            <div className="mx-auto max-w-2xl min-h-screen flex flex-col">
+              {children}
+            </div>
+            <InstallPrompt />
+            <ServiceWorkerRegistration />
+          </AuthGuard>
         </SessionProvider>
       </body>
     </html>
