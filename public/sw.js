@@ -5,7 +5,7 @@
 //  - API mutations (POST/PUT/PATCH/DELETE to /api/sessions/*/rounds): queue when offline
 //  - Static assets (_next/static): cache-first
 
-const CACHE = "scorecard-v1";
+const CACHE = "scorecard-v2";
 const OFFLINE_PAGE = "/offline.html";
 
 // ── Install: cache offline fallback page ───────────────────────────────────
