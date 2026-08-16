@@ -672,12 +672,17 @@ export default function GamePage() {
       <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Game Settings">
         <div className="space-y-5">
           {game.settings.map((s) => {
+            // `in` rather than ?? so an explicitly-cleared value isn't
+            // overwritten by the stored one while the user is typing
+            const readSetting = (key: string) =>
+              key in localSettings ? localSettings[key] : settings[key];
+
             const showWhen = s.showWhen;
             if (showWhen) {
-              const watchVal = localSettings[showWhen.setting] ?? settings[showWhen.setting];
-              if (watchVal !== showWhen.value) return null;
+              if (readSetting(showWhen.setting) !== showWhen.value) return null;
             }
-            const currentVal = localSettings[s.key] ?? settings[s.key] ?? s.defaultValue;
+            const stored = readSetting(s.key);
+            const currentVal = s.key in localSettings ? stored : stored ?? s.defaultValue;
             return (
               <div key={s.key} className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -694,6 +699,24 @@ export default function GamePage() {
                     max={s.max}
                     minLabel={s.minLabel}
                     homePosition={s.homePosition}
+                  />
+                ) : s.type === "number" ? (
+                  // Plain number setting (no min/max) — free-text entry,
+                  // matching the new-game screen. Clearing it restores the
+                  // game's default at save time.
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder={String(s.defaultValue)}
+                    value={currentVal === undefined ? "" : String(currentVal)}
+                    onChange={(e) => {
+                      const parsed = parseFloat(e.target.value);
+                      setLocalSettings((prev) => ({
+                        ...prev,
+                        [s.key]: isNaN(parsed) ? undefined : parsed,
+                      }));
+                    }}
+                    className="w-full text-center rounded-xl bg-surface-elevated border border-slate-600 px-3 py-2 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                   />
                 ) : s.type === "boolean" ? (
                   <div className="flex gap-2">
@@ -722,7 +745,9 @@ export default function GamePage() {
                         onClick={() => setLocalSettings((prev) => ({ ...prev, [s.key]: opt.value }))}
                         className={cn(
                           "px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors",
-                          currentVal === opt.value
+                          // String compare: sessions created before select
+                          // values were typed store them as strings
+                          String(currentVal) === String(opt.value)
                             ? "bg-accent text-white border-accent"
                             : "bg-surface-elevated border-slate-600 text-slate-300"
                         )}
