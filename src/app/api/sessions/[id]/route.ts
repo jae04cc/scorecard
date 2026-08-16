@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { requireSessionAccess } from "@/lib/authz";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const actor = await requireSessionAccess(params.id);
+  if (actor instanceof NextResponse) return actor;
+
   try {
     const session = await db.query.sessions.findFirst({
       where: eq(sessions.id, params.id),
@@ -34,6 +38,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const actor = await requireSessionAccess(params.id);
+  if (actor instanceof NextResponse) return actor;
+
   try {
     const body = (await req.json()) as Partial<{
       status: typeof sessions.$inferInsert.status;
@@ -64,7 +71,15 @@ export async function PATCH(
           : body.completedAt;
     }
 
+    // Reassigning ownership is an admin action (used by the orphaned-session
+    // picker in /history) — a regular owner must not hand their game away.
     if ("userId" in body) {
+      if (actor.authEnabled && !actor.isAdmin) {
+        return NextResponse.json(
+          { error: "Only an admin can reassign a game." },
+          { status: 403 }
+        );
+      }
       updates.userId = body.userId;
     }
 
@@ -84,6 +99,9 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const actor = await requireSessionAccess(params.id);
+  if (actor instanceof NextResponse) return actor;
+
   try {
     await db.delete(sessions).where(eq(sessions.id, params.id));
     return NextResponse.json({ ok: true });

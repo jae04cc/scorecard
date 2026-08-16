@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { appSettings, sessions, sessionPlayers } from "@/lib/db/schema";
+import { sessions, sessionPlayers } from "@/lib/db/schema";
 import { generateId } from "@/lib/utils";
 import { getGame } from "@/lib/games";
-import { auth } from "@/auth";
+import { getActor, requireUser } from "@/lib/authz";
 import { and, desc, eq } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -11,11 +11,7 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status");
 
   try {
-    // Check if auth is enabled
-    const oidcRow = await db.query.appSettings.findFirst({
-      where: eq(appSettings.key, "oidc_enabled"),
-    });
-    const authEnabled = oidcRow?.value === "true";
+    const { authEnabled, userId, isAdmin } = await getActor();
 
     const statusFilter = status
       ? eq(sessions.status, status as "active" | "completed" | "abandoned")
@@ -32,10 +28,6 @@ export async function GET(req: NextRequest) {
     }
 
     // Auth is enabled — check who's asking
-    const session = await auth();
-    const userId = session?.user.id ?? null;
-    const isAdmin = session?.user.role === "admin";
-
     if (!userId) {
       return NextResponse.json([]);
     }
@@ -74,6 +66,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const actor = await requireUser();
+  if (actor instanceof NextResponse) return actor;
+
   try {
     const body = await req.json();
     const { gameId, playerNames, settings = {} } = body as {
@@ -94,8 +89,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const authSession = await auth();
-    const userId = authSession?.user.id ?? null;
+    const userId = actor.userId;
 
     const sessionId = generateId();
     const now = Date.now();

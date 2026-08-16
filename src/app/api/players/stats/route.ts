@@ -3,22 +3,25 @@ import { db } from "@/lib/db";
 import { appSettings, sessions } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { computeStandings, getGame } from "@/lib/games";
-import { auth } from "@/auth";
+import { requireUser } from "@/lib/authz";
 
 export async function GET() {
+  const actor = await requireUser();
+  if (actor instanceof NextResponse) return actor;
+
   try {
-    const authSession = await auth();
-    const userId = authSession?.user.id ?? null;
-    const isAdmin = authSession?.user.role === "admin";
+    const { authEnabled, userId, isAdmin } = actor;
 
     const visibilityRow = await db.query.appSettings.findFirst({
       where: eq(appSettings.key, "stats_visibility"),
     });
     const statsVisibility = visibilityRow?.value ?? "global";
 
+    // "scoped" means a non-admin only sees sessions they own. Anonymous callers
+    // can't reach this when auth is on (requireUser), so no unscoped fallback.
     const ownershipFilter =
-      statsVisibility === "scoped" && userId && !isAdmin
-        ? eq(sessions.userId, userId)
+      authEnabled && statsVisibility === "scoped" && !isAdmin
+        ? eq(sessions.userId, userId ?? "")
         : undefined;
 
     const completedFilter = eq(sessions.status, "completed");

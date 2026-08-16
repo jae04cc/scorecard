@@ -1,15 +1,28 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Home, Settings } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 /**
  * Placed in the top-right of every inner page header.
  * Shows a Home button always, and a Settings (admin) cog for admin users.
+ * When auth is disabled app-wide there are no roles, so the cog is shown to
+ * everyone — but a signed-out visitor on an auth-enabled instance must not
+ * see it.
  */
 export function HeaderActions() {
   const { data: session } = useSession();
-  const isAdmin = !session || session.user.role === "admin";
+  const [authEnabled, setAuthEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((d) => setAuthEnabled(Boolean(d.authEnabled)))
+      .catch(() => setAuthEnabled(true));
+  }, []);
+
+  const isAdmin = authEnabled === false || session?.user.role === "admin";
 
   return (
     <div className="flex items-center gap-0.5 ml-auto">
