@@ -568,9 +568,18 @@ function NewGameForm() {
                         <select
                           className="rounded-lg bg-surface-elevated border border-slate-600 px-2 py-1.5 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                           value={String(settings[s.key] ?? s.defaultValue)}
-                          onChange={(e) =>
-                            setSettings((prev) => ({ ...prev, [s.key]: e.target.value }))
-                          }
+                          onChange={(e) => {
+                            // Store the option's own value, not the string the
+                            // DOM hands back — options may be numbers and are
+                            // compared by identity elsewhere
+                            const opt = s.options?.find(
+                              (o) => String(o.value) === e.target.value
+                            );
+                            setSettings((prev) => ({
+                              ...prev,
+                              [s.key]: opt ? opt.value : e.target.value,
+                            }));
+                          }}
                         >
                           {s.options?.map((o) => (
                             <option key={String(o.value)} value={String(o.value)}>

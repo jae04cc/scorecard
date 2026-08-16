@@ -97,7 +97,8 @@ export const skyjoGame: GameDefinition = {
 
   getCheatSheet: (settings) => {
     const endScore = (settings["endScore"] as number | undefined) ?? 100;
-    const penaltyRaw = (settings["triggerPenalty"] as number | undefined) ?? 2;
+    // Sessions created before select values were typed store this as a string
+    const penaltyRaw = Number(settings["triggerPenalty"] ?? 2) || 2;
     const penaltyLabel =
       penaltyRaw === 1 ? "None (disabled)" : `×${penaltyRaw}`;
 

@@ -171,9 +171,11 @@ export default function GameHistoryPage() {
   );
 
   // Non-default settings to display
+  // String compare: sessions created before select values were typed store
+  // them as strings, which would otherwise always read as non-default
   const nonDefaultSettings = game.settings.filter((gs) => {
     const current = settings[gs.key];
-    return current !== undefined && current !== gs.defaultValue;
+    return current !== undefined && String(current) !== String(gs.defaultValue);
   });
 
   return (
@@ -280,7 +282,7 @@ export default function GameHistoryPage() {
                   let displayVal = String(val);
                   if (gs.type === "boolean") displayVal = val ? "On" : "Off";
                   if (gs.options) {
-                    const opt = gs.options.find((o) => o.value === val);
+                    const opt = gs.options.find((o) => String(o.value) === String(val));
                     if (opt) displayVal = opt.label;
                   }
                   return (
