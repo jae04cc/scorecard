@@ -80,6 +80,13 @@ export async function GET() {
         }));
       }
 
+      // Single-player sessions record the result explicitly ("Did you win?").
+      // That answer beats anything computeStandings inferred from the score.
+      if (activePlayers.length === 1 && typeof settings.wonGame === "boolean") {
+        const won = settings.wonGame as boolean;
+        standings = standings.map((s) => ({ ...s, isWinning: won }));
+      }
+
       const seenNames = new Set<string>();
       for (const player of activePlayers) {
         if (seenNames.has(player.name)) continue;
@@ -121,9 +128,18 @@ export async function GET() {
           gameStat.scoredGames++;
         }
 
-        // Head-to-head: compare against all other active players in same session
+        // Head-to-head: compare against every other active player in this
+        // session. Must NOT skip names already in seenNames — that only tracks
+        // players processed so far, which would record each pairing on one
+        // side only (player 1 vs 2, but never 2 vs 1).
+        const countedOpponents = new Set<string>();
         for (const opponent of activePlayers) {
-          if (opponent.name === player.name || seenNames.has(opponent.name)) continue;
+          if (opponent.name === player.name) continue;
+          // Teammates always share a rank, so a H2H row against them is noise
+          if (player.team && opponent.team === player.team) continue;
+          if (countedOpponents.has(opponent.name)) continue;
+          countedOpponents.add(opponent.name);
+
           const oppStanding = standings.find((s) => s.playerId === opponent.id);
           if (!oppStanding) continue;
 

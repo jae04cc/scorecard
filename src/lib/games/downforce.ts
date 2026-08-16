@@ -54,13 +54,18 @@ export const downforceGame: GameDefinition = {
     const auctionTotal = Object.values(costs).reduce((s, c) => s + c, 0);
     const net = racingTotal + bettingTotal - auctionTotal;
 
+    // Downforce is won at the table, not by net winnings — the player states
+    // the result when saving. Fall back to net only while still in progress.
+    const declared = settings["wonGame"];
+    const isWinning = typeof declared === "boolean" ? declared : net > 0;
+
     return players.map((p) => ({
       playerId: p.id,
       playerName: p.name,
       team: p.team,
       total: net,
       rank: 1,
-      isWinning: net > 0,
+      isWinning,
     }));
   },
 
