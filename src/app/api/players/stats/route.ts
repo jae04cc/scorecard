@@ -5,6 +5,10 @@ import { and, eq } from "drizzle-orm";
 import { computeStandings, getGame } from "@/lib/games";
 import { requireUser } from "@/lib/authz";
 
+// Reads the database per-request — must never be prerendered at build time,
+// where no schema exists yet.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const actor = await requireUser();
   if (actor instanceof NextResponse) return actor;

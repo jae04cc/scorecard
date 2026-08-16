@@ -6,6 +6,10 @@ import { getGame } from "@/lib/games";
 import { getActor, requireUser } from "@/lib/authz";
 import { and, desc, eq } from "drizzle-orm";
 
+// Reads the database per-request — must never be prerendered at build time,
+// where no schema exists yet.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
