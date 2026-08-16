@@ -25,6 +25,10 @@ interface RoundEntryModalProps {
   roundNumber?: number;
 }
 
+// Metadata key marking which target ended the round (trigger-player games).
+// Stored alongside the raw fields so an edit can restore the selection.
+const TRIGGER_FIELD = "triggerPlayer";
+
 // Horizontally scrollable bubble picker; home position defaults to 5
 function NumberPicker({
   value,
@@ -196,7 +200,16 @@ export function RoundEntryModal({
     } else {
       setTextInputRaw({});
     }
-    setTriggerPlayerId(null);
+    // Restore who ended the round when editing — the penalty is re-derived on
+    // save, so losing this selection would silently drop it
+    if (hasTriggerPlayer) {
+      const restored = entryTargets
+        .map((t) => (isTeamFields ? t.team ?? t.id : t.id))
+        .find((key) => initValues[key]?.[TRIGGER_FIELD] === 1);
+      setTriggerPlayerId(restored ?? null);
+    } else {
+      setTriggerPlayerId(null);
+    }
     setError(null);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -250,7 +263,12 @@ export function RoundEntryModal({
       const targetKey = isTeamFields ? (player.team ?? player.id) : player.id;
       const rawFields = values[targetKey] ?? getDefaultFields();
       const normFields = normalizedValues[targetKey] ?? rawFields;
-      return { playerId: player.id, score: computeScore(normFields), metadata: rawFields };
+      // Metadata always holds the pre-penalty values, so re-opening this round
+      // and saving again re-applies the penalty rather than compounding it
+      const metadata = hasTriggerPlayer
+        ? { ...rawFields, [TRIGGER_FIELD]: targetKey === triggerPlayerId ? 1 : 0 }
+        : rawFields;
+      return { playerId: player.id, score: computeScore(normFields), metadata };
     });
 
     // Trigger-player penalty: if selected player doesn't have the lowest score, multiply their score

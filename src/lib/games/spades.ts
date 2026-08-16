@@ -1,5 +1,28 @@
 import type { GameDefinition, Standing } from "./types";
 
+// Score for a single hand, excluding cumulative bag penalties.
+// Shared by score entry and computeStandings so both agree.
+function scoreHand(fields: Record<string, number>, nilBidValue: number): number {
+  const bid = fields["bid"] ?? 0;
+  const tricks = fields["tricks"] ?? 0;
+  const nilBid = fields["nilBid"] ?? 0;
+  const nilSuccess = fields["nilSuccess"] ?? 0;
+
+  let score = 0;
+
+  // Main bid scoring
+  if (bid > 0) {
+    score += tricks >= bid ? bid * 10 + (tricks - bid) : -(bid * 10);
+  }
+
+  // Nil scoring — independent of bid/tricks
+  if (nilBid === 1) {
+    score += nilSuccess === 1 ? nilBidValue : -nilBidValue;
+  }
+
+  return score;
+}
+
 // ---------------------------------------------------------------------------
 // Spades
 // Played in 2 teams of 2. Each round: both teams bid, then play tricks.
@@ -69,32 +92,16 @@ export const spadesGame: GameDefinition = {
         showWhen: { field: "nilBid", value: 1 },
       },
     ],
-    calculate: (fields) => {
-      // NOTE: computeStandings fully recalculates from metadata using actual settings.
-      // This calculate() is only used for the live preview in the modal (uses default nilBidValue=30).
-      const bid = fields["bid"] ?? 0;
-      const tricks = fields["tricks"] ?? 0;
-      const nilBid = fields["nilBid"] ?? 0;
-      const nilSuccess = fields["nilSuccess"] ?? 0;
-
-      let score = 0;
-
-      // Main bid scoring
-      if (bid > 0) {
-        if (tricks >= bid) {
-          score += bid * 10 + (tricks - bid);
-        } else {
-          score -= bid * 10;
-        }
-      }
-
-      // Nil scoring — independent of bid/tricks (default nilBidValue = 30)
-      if (nilBid === 1) {
-        score += nilSuccess === 1 ? 30 : -30;
-      }
-
-      return score;
-    },
+    // The value returned here is both the modal preview AND what gets stored as
+    // the round's score and rendered in each table row, so it must use the real
+    // nilBidValue — otherwise the rows don't sum to the total that
+    // computeStandings derives from metadata.
+    //
+    // Bag penalties are deliberately absent: they're cumulative across hands,
+    // not a property of one hand, and ScoreTable renders them as their own row.
+    calculate: (fields) => scoreHand(fields, 30),
+    calculateWithSettings: (fields, settings) =>
+      scoreHand(fields, (settings["nilBidValue"] as number) ?? 30),
   },
 
   validateRound: (entries) => {
@@ -156,31 +163,20 @@ export const spadesGame: GameDefinition = {
         } catch { /* skip malformed */ }
       }
 
-      // Main bid scoring — fully recalculated from metadata
-      if (bid > 0) {
-        if (tricks >= bid) {
-          const overtricks = tricks - bid;
-          t.score += bid * 10 + overtricks;
-          // Bag tracking
-          if (overtricks > 0) {
-            const bagsBefore = t.bags;
-            t.bags += overtricks;
-            if (bagPenaltyAt > 0) {
-              const penaltiesBefore = Math.floor(bagsBefore / bagPenaltyAt);
-              const penaltiesAfter = Math.floor(t.bags / bagPenaltyAt);
-              if (penaltiesAfter > penaltiesBefore) {
-                t.score -= (penaltiesAfter - penaltiesBefore) * 100;
-              }
-            }
-          }
-        } else {
-          t.score -= bid * 10;
-        }
-      }
+      // Bid + nil — same function score entry used, so rows sum to the total
+      t.score += scoreHand({ bid, tricks, nilBid, nilSuccess }, nilBidValue);
 
-      // Nil scoring — independent of main bid/tricks
-      if (nilBid === 1) {
-        t.score += nilSuccess === 1 ? nilBidValue : -nilBidValue;
+      // Bag tracking — overtricks on a made bid, penalised cumulatively
+      if (bid > 0 && tricks > bid) {
+        const bagsBefore = t.bags;
+        t.bags += tricks - bid;
+        if (bagPenaltyAt > 0) {
+          const penaltiesBefore = Math.floor(bagsBefore / bagPenaltyAt);
+          const penaltiesAfter = Math.floor(t.bags / bagPenaltyAt);
+          if (penaltiesAfter > penaltiesBefore) {
+            t.score -= (penaltiesAfter - penaltiesBefore) * 100;
+          }
+        }
       }
     }
 
