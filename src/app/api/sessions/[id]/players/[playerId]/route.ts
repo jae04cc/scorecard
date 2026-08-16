@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sessionPlayers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { requirePlayerInSession } from "@/lib/authz";
 
 // Soft-remove a player from an active session
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string; playerId: string } }
 ) {
+  const actor = await requirePlayerInSession(params.id, params.playerId);
+  if (actor instanceof NextResponse) return actor;
+
   try {
     await db
       .update(sessionPlayers)
@@ -25,6 +29,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string; playerId: string } }
 ) {
+  const actor = await requirePlayerInSession(params.id, params.playerId);
+  if (actor instanceof NextResponse) return actor;
+
   try {
     const body = await req.json();
     const { name, team, active } = body as {

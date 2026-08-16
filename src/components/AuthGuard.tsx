@@ -4,10 +4,14 @@ import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 
 const PROTECTED = ["/new", "/game", "/history", "/players", "/admin"];
+const ADMIN_ONLY = ["/admin"];
 
-function isProtectedPath(path: string) {
-  return PROTECTED.some((p) => path === p || path.startsWith(p + "/"));
+function matches(list: string[], path: string) {
+  return list.some((p) => path === p || path.startsWith(p + "/"));
 }
+
+const isProtectedPath = (path: string) => matches(PROTECTED, path);
+const isAdminPath = (path: string) => matches(ADMIN_ONLY, path);
 
 interface CheckState {
   path: string;
@@ -15,9 +19,10 @@ interface CheckState {
 }
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const isAdmin = session?.user.role === "admin";
 
   const [check, setCheck] = useState<CheckState>(() => ({
     path: pathname,
@@ -36,6 +41,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     if (status === "loading") return;
 
     if (status === "authenticated") {
+      // Signed in, but /admin additionally requires the admin role
+      if (isAdminPath(pathname) && !isAdmin) {
+        router.replace("/");
+        return;
+      }
       setCheck({ path: pathname, allowed: true });
       return;
     }
@@ -48,11 +58,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           router.replace("/");
           // leave allowed as null — spinner shows while redirect completes
         } else {
+          // Auth disabled app-wide: no roles exist, so /admin is open too
           setCheck({ path: pathname, allowed: true });
         }
       })
       .catch(() => setCheck({ path: pathname, allowed: true }));
-  }, [pathname, status, router]);
+  }, [pathname, status, isAdmin, router]);
 
   // Show spinner if: still checking OR the checked path doesn't match current path
   const ready = check.allowed === true && check.path === pathname;

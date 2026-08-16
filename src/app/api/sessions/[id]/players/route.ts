@@ -3,11 +3,15 @@ import { db } from "@/lib/db";
 import { sessionPlayers, sessions } from "@/lib/db/schema";
 import { generateId } from "@/lib/utils";
 import { eq, max } from "drizzle-orm";
+import { requireSessionAccess } from "@/lib/authz";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const actor = await requireSessionAccess(params.id);
+  if (actor instanceof NextResponse) return actor;
+
   try {
     const session = await db.query.sessions.findFirst({
       where: eq(sessions.id, params.id),

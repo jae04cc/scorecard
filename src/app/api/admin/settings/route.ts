@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { appSettings } from "@/lib/db/schema";
 import { hashPassword } from "@/lib/password";
+import { requireAdmin } from "@/lib/authz";
+
+export const dynamic = "force-dynamic";
 
 // Keys returned to the client (never expose hashes or internal secrets)
 const READABLE_KEYS = [
@@ -26,6 +29,9 @@ const WRITABLE_KEYS = [
 ] as const;
 
 export async function GET() {
+  const actor = await requireAdmin();
+  if (actor instanceof NextResponse) return actor;
+
   try {
     const rows = await db.select().from(appSettings);
     const map: Record<string, string> = {};
@@ -47,6 +53,9 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
+  const actor = await requireAdmin();
+  if (actor instanceof NextResponse) return actor;
+
   try {
     const body = await req.json() as Record<string, string>;
 

@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { requireAdmin } from "@/lib/authz";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const actor = await requireAdmin();
+  if (actor instanceof NextResponse) return actor;
+
   try {
     const { role } = await req.json() as { role: "admin" | "user" };
     if (role !== "admin" && role !== "user") {
