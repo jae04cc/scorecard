@@ -4,6 +4,10 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+// Reads the database per-request — must never be prerendered at build time,
+// where no schema exists yet.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const session = await auth();
   if (!session?.user.id || session.user.id === "local-admin") {
