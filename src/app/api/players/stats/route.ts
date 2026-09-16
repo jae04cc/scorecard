@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { appSettings, sessions } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { computeStandings, getGame } from "@/lib/games";
+import { gameLabel } from "@/lib/gameLabel";
 import { requireUser } from "@/lib/authz";
 
 // Reads the database per-request — must never be prerendered at build time,
@@ -114,18 +115,21 @@ export async function GET() {
         const stat = playerStats.get(player.name)!;
         if (isWin) stat.wins++; else stat.losses++;
 
-        if (!stat.byGame.has(session.gameId)) {
-          stat.byGame.set(session.gameId, {
+        // Group by resolved label so each named custom game ("Mahjong") is its
+        // own row, while keeping gameId for the icon lookup on the client.
+        const label = gameLabel(session.gameId, settings);
+        if (!stat.byGame.has(label.groupKey)) {
+          stat.byGame.set(label.groupKey, {
             gameId: session.gameId,
-            gameName: game.name,
-            gameEmoji: game.emoji,
+            gameName: label.name,
+            gameEmoji: label.emoji,
             wins: 0,
             losses: 0,
             totalScore: 0,
             scoredGames: 0,
           });
         }
-        const gameStat = stat.byGame.get(session.gameId)!;
+        const gameStat = stat.byGame.get(label.groupKey)!;
         if (isWin) gameStat.wins++; else gameStat.losses++;
         if (allScores.length > 0) {
           gameStat.totalScore += standing.total;
@@ -163,7 +167,8 @@ export async function GET() {
       losses: s.losses,
       totalGames: s.wins + s.losses,
       winPct: s.wins + s.losses > 0 ? s.wins / (s.wins + s.losses) : 0,
-      byGame: Array.from(s.byGame.values()).map((g) => ({
+      byGame: Array.from(s.byGame.entries()).map(([groupKey, g]) => ({
+        groupKey,
         gameId: g.gameId,
         gameName: g.gameName,
         gameEmoji: g.gameEmoji,

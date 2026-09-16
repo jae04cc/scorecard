@@ -7,6 +7,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { formatDateTimeRange, formatDuration } from "@/lib/utils";
+import { gameLabel } from "@/lib/gameLabel";
 import { useSession } from "next-auth/react";
 import { HeaderActions } from "@/components/ui/HeaderActions";
 
@@ -25,6 +26,7 @@ interface SessionSummary {
   userId: string | null;
   ownerName?: string | null;
   authEnabled?: boolean;
+  settings?: string | null;
   players: Array<{ name: string; active: boolean }>;
 }
 
@@ -88,7 +90,7 @@ export default function HistoryPage() {
   const filtered = sessions.filter((s) => {
     if (filter !== "all" && s.status !== filter) return false;
     if (searchLower) {
-      const gameName = (gameMap.get(s.gameId)?.name ?? s.gameId).toLowerCase();
+      const gameName = gameLabel(s.gameId, s.settings).name.toLowerCase();
       const playerNames = s.players.filter((p) => p.active).map((p) => p.name.toLowerCase());
       const matchesGame = gameName.includes(searchLower);
       const matchesPlayer = playerNames.some((n) => n.includes(searchLower));
@@ -103,11 +105,10 @@ export default function HistoryPage() {
     const rows = [
       ["ID", "Game", "Status", "Players", "Started", "Completed"],
       ...sessions.map((s) => {
-        const game = gameMap.get(s.gameId);
         const players = s.players.filter((p) => p.active).map((p) => p.name).join("; ");
         const started = new Date(s.createdAt).toLocaleString();
         const completed = s.completedAt ? new Date(s.completedAt).toLocaleString() : "";
-        return [s.id, game?.name ?? s.gameId, s.status, players, started, completed];
+        return [s.id, gameLabel(s.gameId, s.settings).name, s.status, players, started, completed];
       }),
     ];
     const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -257,7 +258,7 @@ export default function HistoryPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-white text-sm">
-                              {game?.name ?? s.gameId}
+                              {gameLabel(s.gameId, s.settings).name}
                             </span>
                             <Badge
                               variant={

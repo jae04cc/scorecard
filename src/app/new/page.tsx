@@ -54,6 +54,18 @@ function NewGameForm() {
   const [customTeamCount, setCustomTeamCount] = useState<number>(0);
   const [teamPlayers, setTeamPlayers] = useState<string[][]>([]);
 
+  // Custom game name — labels the game (e.g. "Mahjong") so it groups like a
+  // built-in game everywhere. Suggestions are previously-used names, to avoid
+  // near-duplicates ("mahjong" vs "mah jong").
+  const [customName, setCustomName] = useState("");
+  const [customNameSuggestions, setCustomNameSuggestions] = useState<string[]>([]);
+  useEffect(() => {
+    fetch("/api/sessions/custom-names")
+      .then((r) => r.json())
+      .then((names: string[]) => Array.isArray(names) && setCustomNameSuggestions(names))
+      .catch(() => {});
+  }, []);
+
   // User's first name for Player 1 prefill — fetch if session exists but firstName not yet in token
   const [userFirstName, setUserFirstName] = useState<string>(() => authSession?.user.firstName ?? "");
   useEffect(() => {
@@ -103,6 +115,7 @@ function NewGameForm() {
     setPlayerNames(Array(game.minPlayers).fill(""));
     setCustomTeamCount(0);
     setTeamPlayers([]);
+    setCustomName("");
   };
 
   const handleCustomTeamCountChange = (count: number) => {
@@ -156,6 +169,13 @@ function NewGameForm() {
       return;
     }
 
+    // Custom games must be named so they group like a real game everywhere.
+    const trimmedCustomName = toProperCase(customName);
+    if (selectedGame.id === "custom" && !trimmedCustomName) {
+      setError("Enter a name for this game (e.g. Mahjong).");
+      return;
+    }
+
     // Build flat player list and team sizes for custom team mode
     let filled: string[];
     let customTeamSizes: number[] | undefined;
@@ -189,6 +209,7 @@ function NewGameForm() {
         }
       }
       if (customTeamSizes) resolvedSettings.customTeamSizes = customTeamSizes;
+      if (selectedGame.id === "custom") resolvedSettings.customName = trimmedCustomName;
 
       const res = await fetch("/api/sessions", {
         method: "POST",
@@ -256,6 +277,28 @@ function NewGameForm() {
           <p className="text-xs text-slate-500 bg-surface-card rounded-xl px-4 py-3 leading-relaxed -mt-2">
             Downforce replicates your personal scorecard — it tracks your own auction spend, bets, and racing payouts only, not everyone&apos;s scores simultaneously.
           </p>
+        )}
+
+        {/* Custom game name — what was actually played, so it groups like a
+            real game in history and the leaderboard. */}
+        {selectedGame?.id === "custom" && (
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest text-slate-500 block mb-3">Game Name</label>
+            <Input
+              placeholder="e.g. Mahjong, Smash Up"
+              value={customName}
+              onChange={(e) => setCustomName(liveProperCase(e.target.value))}
+              list="custom-name-suggestions"
+              autoComplete="off"
+            />
+            {customNameSuggestions.length > 0 && (
+              <datalist id="custom-name-suggestions">
+                {customNameSuggestions.map((name) => (
+                  <option key={name} value={name} />
+                ))}
+              </datalist>
+            )}
+          </div>
         )}
 
         {/* Custom game team mode selector */}

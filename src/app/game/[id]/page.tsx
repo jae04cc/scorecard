@@ -25,6 +25,7 @@ import { RoundEntryModal } from "@/components/game/RoundEntryModal";
 import { CheatSheet } from "@/components/game/CheatSheet";
 import { DownforceScorecard } from "@/components/game/DownforceScorecard";
 import { computeStandings, getGame, type GameDefinition } from "@/lib/games";
+import { gameLabel } from "@/lib/gameLabel";
 import { cn, formatDateTime, toProperCase, liveProperCase, findDuplicateName } from "@/lib/utils";
 
 interface SessionData {
@@ -211,6 +212,10 @@ export default function GamePage() {
     setActionLoading(true);
     try {
       const merged = { ...settings, ...localSettings };
+      // Normalize the custom game name the same way the new-game screen does.
+      if (game?.id === "custom" && typeof merged.customName === "string") {
+        merged.customName = toProperCase(merged.customName);
+      }
       await fetch(`/api/sessions/${sessionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -326,7 +331,7 @@ export default function GamePage() {
               >
                 <GameIcon gameId={game.id} size={16} strokeWidth={1.5} fallback={game.emoji} />
               </div>
-              <h1 className="text-xl font-black text-white">{game.name}</h1>
+              <h1 className="text-xl font-black text-white">{gameLabel(game.id, settings).name}</h1>
               <Badge variant={session.status === "active" ? "success" : "default"}>
                 {session.status}
               </Badge>
@@ -675,6 +680,21 @@ export default function GamePage() {
       {/* Settings edit modal */}
       <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Game Settings">
         <div className="space-y-5">
+          {game.id === "custom" && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-200">Game Name</label>
+              <Input
+                placeholder="e.g. Mahjong, Smash Up"
+                value={String(
+                  ("customName" in localSettings ? localSettings.customName : settings.customName) ?? ""
+                )}
+                onChange={(e) =>
+                  setLocalSettings((prev) => ({ ...prev, customName: liveProperCase(e.target.value) }))
+                }
+                autoComplete="off"
+              />
+            </div>
+          )}
           {game.settings.map((s) => {
             // `in` rather than ?? so an explicitly-cleared value isn't
             // overwritten by the stored one while the user is typing

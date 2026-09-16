@@ -11,6 +11,7 @@ import { GameIcon } from "@/components/ui/GameIcon";
 import { cn } from "@/lib/utils";
 
 interface GameBreakdown {
+  groupKey: string;
   gameId: string;
   gameName: string;
   gameEmoji: string;
@@ -292,7 +293,7 @@ export default function ProfilePage() {
                 {statsSection === "games" && (
                   <div className="px-4 py-3 space-y-2">
                     {myStat.byGame.map((g) => (
-                      <div key={g.gameId} className="flex items-center gap-2">
+                      <div key={g.groupKey} className="flex items-center gap-2">
                         <span className="w-6 flex items-center justify-center text-slate-400">
                           <GameIcon gameId={g.gameId} size={14} strokeWidth={1.5} fallback={g.gameEmoji} />
                         </span>

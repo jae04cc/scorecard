@@ -7,6 +7,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { cn, formatDate } from "@/lib/utils";
+import { gameLabel } from "@/lib/gameLabel";
 import { useSession, signIn } from "next-auth/react";
 
 interface GameInfo {
@@ -25,6 +26,7 @@ interface SessionSummary {
   status: string;
   createdAt: number;
   userId: string | null;
+  settings?: string | null;
   players: Array<{ name: string; active: boolean }>;
 }
 
@@ -200,7 +202,7 @@ export default function HomePage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-slate-200 text-sm">
-                                {game?.name ?? s.gameId}
+                                {gameLabel(s.gameId, s.settings).name}
                               </span>
                               {isActive && <Badge variant="success">Active</Badge>}
                               {authEnabled && isAdmin && isOrphaned && (

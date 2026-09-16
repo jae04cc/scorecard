@@ -1,14 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, RotateCcw, Play, Share2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, RotateCcw, Play, Share2, ChevronDown, ChevronUp, Pencil, Check, X } from "lucide-react";
 import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { HeaderActions } from "@/components/ui/HeaderActions";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { ScoreTable } from "@/components/game/ScoreTable";
 import { computeStandings, getGame, type GameDefinition } from "@/lib/games";
-import { formatDateTimeRange } from "@/lib/utils";
+import { gameLabel } from "@/lib/gameLabel";
+import { formatDateTimeRange, liveProperCase, toProperCase } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 interface SessionData {
@@ -43,6 +45,28 @@ export default function GameHistoryPage() {
   const [game, setGame] = useState<GameDefinition | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const handleRenameCustom = async () => {
+    const trimmed = toProperCase(nameDraft);
+    if (!session || !trimmed) return;
+    setSavingName(true);
+    try {
+      const merged = { ...JSON.parse(session.settings ?? "{}"), customName: trimmed };
+      await fetch(`/api/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: JSON.stringify(merged) }),
+      });
+      const updated = await fetch(`/api/sessions/${sessionId}`).then((r) => r.json());
+      setSession(updated);
+      setEditingName(false);
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   useEffect(() => {
     fetch(`/api/sessions/${sessionId}`)
@@ -106,8 +130,9 @@ export default function GameHistoryPage() {
         seen.add(key);
         return true;
       });
+      const shareName = gameLabel(session.gameId, parsedSettings).name;
       const lines = [
-        `${game.name} — ${new Date(session.createdAt).toLocaleDateString()}`,
+        `${shareName} — ${new Date(session.createdAt).toLocaleDateString()}`,
         "",
         ...shareRows.map((s) => {
           const medal = s.rank === 1 ? "🥇" : s.rank === 2 ? "🥈" : s.rank === 3 ? "🥉" : `#${s.rank}`;
@@ -121,7 +146,7 @@ export default function GameHistoryPage() {
       ];
       const text = lines.join("\n");
       if (navigator.share) {
-        await navigator.share({ title: `${game.name} Results`, text });
+        await navigator.share({ title: `${shareName} Results`, text });
       } else {
         await navigator.clipboard.writeText(text);
         alert("Results copied to clipboard!");
@@ -196,14 +221,45 @@ export default function GameHistoryPage() {
               >
                 <GameIcon gameId={game.id} size={16} strokeWidth={1.5} fallback={game.emoji} />
               </div>
-              <h1 className="text-xl font-black text-white">{game.name}</h1>
+              <h1 className="text-xl font-black text-white">{gameLabel(game.id, settings).name}</h1>
+              {game.id === "custom" && !editingName && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNameDraft(gameLabel(game.id, settings).name);
+                    setEditingName(true);
+                  }}
+                  className="p-1 rounded-lg text-slate-500 active:text-accent"
+                  title="Rename game"
+                >
+                  <Pencil size={14} />
+                </button>
+              )}
               <Badge variant={session.status === "completed" ? "accent" : "success"}>
                 {session.status}
               </Badge>
             </div>
-            <p className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-              {formatDateTimeRange(session.createdAt, session.completedAt)}
-            </p>
+            {editingName ? (
+              <div className="mt-2 flex items-center gap-2">
+                <Input
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(liveProperCase(e.target.value))}
+                  onKeyDown={(e) => e.key === "Enter" && handleRenameCustom()}
+                  className="min-h-[40px] py-2"
+                  autoFocus
+                />
+                <Button size="sm" onClick={handleRenameCustom} loading={savingName} className="shrink-0">
+                  <Check size={14} />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingName(false)} className="shrink-0">
+                  <X size={14} />
+                </Button>
+              </div>
+            ) : (
+              <p className="text-[10px] text-slate-500 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                {formatDateTimeRange(session.createdAt, session.completedAt)}
+              </p>
+            )}
           </div>
           <HeaderActions />
         </div>
