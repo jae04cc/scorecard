@@ -365,7 +365,11 @@ export default function GamePage() {
         {hasWinner && session.status === "active" && (() => {
           const winners = standings.filter((s) => s.isWinning);
           const winningNames = winners.map((s) => s.playerName).join(" & ");
-          const isTie = winners.length > 1;
+          // Teammates cross the line together as one winning side, so count
+          // distinct teams (falling back to player id for solo games) rather
+          // than winner rows — otherwise a team win reads as a tie.
+          const winningSides = new Set(winners.map((s) => s.team ?? s.playerId));
+          const isTie = winningSides.size > 1;
           return (
             <div className="bg-success/20 border border-success/40 rounded-2xl px-4 py-4 flex flex-col items-center gap-1 text-center">
               <span className="text-3xl">{isTie ? "🤝" : "🏆"}</span>
