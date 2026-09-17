@@ -93,7 +93,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const userId = actor.userId;
+    // The break-glass local admin isn't a real row in `users`, so its id can't
+    // be stored as an owner without violating the foreign key. Games it creates
+    // are left unowned (admin-visible, reassignable) rather than failing.
+    const userId = actor.userId === "local-admin" ? null : actor.userId;
 
     const sessionId = generateId();
     const now = Date.now();
