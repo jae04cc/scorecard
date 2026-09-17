@@ -368,13 +368,12 @@ export default function GamePage() {
           <HeaderActions />
         </div>
 
-        {/* Win target — centered above the score bars so it's easy to find */}
+        {/* Win target — a quiet label above the score bars, right-aligned over
+            the "X left" column it counts down to */}
         {targetLabel && (
-          <div className="mt-3 mb-1 flex justify-center">
-            <Badge variant="warning" className="gap-1.5 px-3 py-1 text-sm">
-              <Target size={14} />
-              {targetLabel}
-            </Badge>
+          <div className="mt-2 mb-2 flex items-center justify-end gap-1.5 text-warning">
+            <Target size={13} />
+            <span className="text-xs font-bold uppercase tracking-wider">{targetLabel}</span>
           </div>
         )}
 
