@@ -11,6 +11,7 @@ import {
   Undo2,
   Settings2,
   Crown,
+  Target,
 } from "lucide-react";
 import { GameIcon, gameIconStyle } from "@/components/ui/GameIcon";
 import { HeaderActions } from "@/components/ui/HeaderActions";
@@ -347,7 +348,6 @@ export default function GamePage() {
               <Badge variant={session.status === "active" ? "success" : "default"}>
                 {session.status}
               </Badge>
-              {targetLabel && <Badge variant="accent">{targetLabel}</Badge>}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               Started {formatDateTime(session.createdAt)}
@@ -367,6 +367,16 @@ export default function GamePage() {
           )}
           <HeaderActions />
         </div>
+
+        {/* Win target — centered above the score bars so it's easy to find */}
+        {targetLabel && (
+          <div className="mt-3 mb-1 flex justify-center">
+            <Badge variant="warning" className="gap-1.5 px-3 py-1 text-sm">
+              <Target size={14} />
+              {targetLabel}
+            </Badge>
+          </div>
+        )}
 
         {/* Standings bar */}
         <StandingsBar
