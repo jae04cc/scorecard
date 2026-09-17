@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { ScoreTable } from "@/components/game/ScoreTable";
-import { computeStandings, getGame, type GameDefinition } from "@/lib/games";
+import { applyManualWinner, computeStandings, getGame, type GameDefinition } from "@/lib/games";
 import { gameLabel } from "@/lib/gameLabel";
 import { formatDateTimeRange, liveProperCase, toProperCase } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -116,11 +116,7 @@ export default function GameHistoryPage() {
       let stndgs = computeStandings(game, activePlayers, allScores, parsedSettings);
       const manualWinnerId = parsedSettings.manualWinnerId as string | undefined;
       if (manualWinnerId) {
-        stndgs = stndgs.map((s) => ({
-          ...s,
-          isWinning: s.playerId === manualWinnerId,
-          rank: s.playerId === manualWinnerId ? 1 : s.rank === 1 ? 2 : s.rank,
-        }));
+        stndgs = applyManualWinner(stndgs, manualWinnerId);
       }
       // For team games deduplicate by team, show all players in that team
       const seen = new Set<string>();
@@ -174,11 +170,7 @@ export default function GameHistoryPage() {
   // Apply manual winner override if set
   const manualWinnerId = settings.manualWinnerId as string | undefined;
   if (manualWinnerId) {
-    standings = standings.map((s) => ({
-      ...s,
-      isWinning: s.playerId === manualWinnerId,
-      rank: s.playerId === manualWinnerId ? 1 : s.rank === 1 ? 2 : s.rank,
-    }));
+    standings = applyManualWinner(standings, manualWinnerId);
   }
 
   const winCondition = game.winCondition;

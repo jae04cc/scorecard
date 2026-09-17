@@ -85,5 +85,21 @@ export function computeStandings(
   return standings;
 }
 
+// Apply a manual winner override to standings. The winner is stored as a
+// single player id, but in team games the win belongs to the whole team, so
+// every player sharing the selected player's team is marked as winning.
+export function applyManualWinner(standings: Standing[], manualWinnerId: string): Standing[] {
+  const selected = standings.find((s) => s.playerId === manualWinnerId);
+  const winningKey = selected?.team ?? manualWinnerId;
+  return standings.map((s) => {
+    const isWinning = (s.team ?? s.playerId) === winningKey;
+    return {
+      ...s,
+      isWinning,
+      rank: isWinning ? 1 : s.rank === 1 ? 2 : s.rank,
+    };
+  });
+}
+
 export type { GameDefinition, Standing };
 export type { WinCondition, ScoreEntryConfig, CheatSheetSection, GameSetting } from "./types";

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { appSettings, sessions } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
-import { computeStandings, getGame } from "@/lib/games";
+import { applyManualWinner, computeStandings, getGame } from "@/lib/games";
 import { gameLabel } from "@/lib/gameLabel";
 import { requireUser } from "@/lib/authz";
 
@@ -78,11 +78,7 @@ export async function GET() {
       // Respect manual winner override
       const manualWinnerId = settings.manualWinnerId as string | undefined;
       if (manualWinnerId) {
-        standings = standings.map((s) => ({
-          ...s,
-          isWinning: s.playerId === manualWinnerId,
-          rank: s.playerId === manualWinnerId ? 1 : s.rank === 1 ? 2 : s.rank,
-        }));
+        standings = applyManualWinner(standings, manualWinnerId);
       }
 
       // Single-player sessions record the result explicitly ("Did you win?").

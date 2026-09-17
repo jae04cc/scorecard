@@ -628,23 +628,43 @@ export default function GamePage() {
                   Mark Winner <span className="text-slate-600 normal-case font-normal">(optional)</span>
                 </p>
                 <div className="space-y-1">
-                  {standings.map((s) => (
-                    <button
-                      key={s.playerId}
-                      type="button"
-                      onClick={() => setEndWinnerId(endWinnerId === s.playerId ? null : s.playerId)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all text-left",
-                        endWinnerId === s.playerId
-                          ? "border-accent bg-accent/10 text-white"
-                          : "border-slate-700 bg-surface-elevated text-slate-300"
-                      )}
-                    >
-                      <Crown size={14} className={endWinnerId === s.playerId ? "text-accent" : "text-slate-600"} />
-                      <span className="flex-1 text-sm font-medium">{s.team ? `${s.team} (${s.playerName})` : s.playerName}</span>
-                      <span className="font-mono text-xs text-slate-500">{s.total}</span>
-                    </button>
-                  ))}
+                  {(() => {
+                    // Deduplicate by team: a team win belongs to the whole side,
+                    // so show one row per team rather than one per player.
+                    const seen = new Set<string>();
+                    return standings.filter((s) => {
+                      const key = s.team ?? s.playerId;
+                      if (seen.has(key)) return false;
+                      seen.add(key);
+                      return true;
+                    });
+                  })().map((s) => {
+                    const teamKey = s.team ?? s.playerId;
+                    const selectedKey = endWinnerId
+                      ? standings.find((m) => m.playerId === endWinnerId)?.team ?? endWinnerId
+                      : null;
+                    const isSelected = selectedKey === teamKey;
+                    const label = s.team
+                      ? `${s.team} (${standings.filter((m) => m.team === s.team).map((m) => m.playerName).join(" & ")})`
+                      : s.playerName;
+                    return (
+                      <button
+                        key={teamKey}
+                        type="button"
+                        onClick={() => setEndWinnerId(isSelected ? null : s.playerId)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all text-left",
+                          isSelected
+                            ? "border-accent bg-accent/10 text-white"
+                            : "border-slate-700 bg-surface-elevated text-slate-300"
+                        )}
+                      >
+                        <Crown size={14} className={isSelected ? "text-accent" : "text-slate-600"} />
+                        <span className="flex-1 text-sm font-medium">{label}</span>
+                        <span className="font-mono text-xs text-slate-500">{s.total}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )
