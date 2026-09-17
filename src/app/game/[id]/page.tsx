@@ -136,6 +136,18 @@ export default function GamePage() {
       ? (winCondition as { targetScore?: number }).targetScore
       : undefined);
 
+  // Lowest-wins games are played *until* someone hits the target, so "first to"
+  // would read backwards for them.
+  const lowestWins =
+    winCondition.type === "lowest" ||
+    (winCondition.type === "target" && winCondition.direction === "until-exceeded");
+  const targetLabel =
+    targetScore === undefined
+      ? null
+      : lowestWins
+        ? `Ends at ${targetScore}`
+        : `First to ${targetScore}`;
+
   const hasWinner = standings.some((s) => s.isWinning);
 
   // --- Handlers ---
@@ -335,6 +347,7 @@ export default function GamePage() {
               <Badge variant={session.status === "active" ? "success" : "default"}>
                 {session.status}
               </Badge>
+              {targetLabel && <Badge variant="accent">{targetLabel}</Badge>}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               Started {formatDateTime(session.createdAt)}
@@ -360,7 +373,7 @@ export default function GamePage() {
           standings={standings}
           winConditionType={winCondition.type}
           targetScore={targetScore}
-          lowestWins={winCondition.type === "lowest" || (winCondition.type === "target" && winCondition.direction === "until-exceeded")}
+          lowestWins={lowestWins}
         />
       </header>
 
@@ -402,8 +415,6 @@ export default function GamePage() {
               }
             : undefined;
 
-          const lowestWins = winCondition.type === "lowest" ||
-            (winCondition.type === "target" && winCondition.direction === "until-exceeded");
           const bagPenaltyAt = settings["bagPenaltyAt"] as number | undefined;
           const showBags = bagPenaltyAt === undefined ? true : bagPenaltyAt > 0;
           return (
