@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { applyManualWinner, computeStandings, getGame } from "@/lib/games";
 import { gameLabel } from "@/lib/gameLabel";
 import { requireUser } from "@/lib/authz";
+import { parseMinGamesToRank } from "@/lib/leaderboard";
 
 // Reads the database per-request — must never be prerendered at build time,
 // where no schema exists yet.
@@ -21,6 +22,11 @@ export async function GET() {
       where: eq(appSettings.key, "stats_visibility"),
     });
     const statsVisibility = visibilityRow?.value ?? "global";
+
+    const minGamesRow = await db.query.appSettings.findFirst({
+      where: eq(appSettings.key, "leaderboard_min_games"),
+    });
+    const minGames = parseMinGamesToRank(minGamesRow?.value);
 
     // "scoped" means a non-admin only sees sessions they own. Anonymous callers
     // can't reach this when auth is on (requireUser), so no unscoped fallback.
@@ -163,6 +169,7 @@ export async function GET() {
       losses: s.losses,
       totalGames: s.wins + s.losses,
       winPct: s.wins + s.losses > 0 ? s.wins / (s.wins + s.losses) : 0,
+      qualified: s.wins + s.losses >= minGames,
       byGame: Array.from(s.byGame.entries()).map(([groupKey, g]) => ({
         groupKey,
         gameId: g.gameId,
@@ -180,9 +187,15 @@ export async function GET() {
       })).sort((a, b) => (b.wins + b.losses) - (a.wins + a.losses)),
     }));
 
-    result.sort((a, b) => b.winPct - a.winPct || b.wins - a.wins || a.name.localeCompare(b.name));
+    // Ranked players first, by record; everyone short of the threshold
+    // follows in alphabetical order, since there's no ranking to imply.
+    result.sort((a, b) => {
+      if (a.qualified !== b.qualified) return a.qualified ? -1 : 1;
+      if (!a.qualified) return a.name.localeCompare(b.name);
+      return b.winPct - a.winPct || b.wins - a.wins || a.name.localeCompare(b.name);
+    });
 
-    return NextResponse.json(result);
+    return NextResponse.json({ minGames, players: result });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to fetch player stats" }, { status: 500 });

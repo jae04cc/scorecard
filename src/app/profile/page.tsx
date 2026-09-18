@@ -82,8 +82,8 @@ export default function ProfilePage() {
     const target = session.user.name.toLowerCase();
     fetch("/api/players/stats")
       .then((r) => r.json())
-      .then((all: PlayerStat[]) => {
-        const found = all.find((p) => p.name.toLowerCase() === target);
+      .then((data: { players: PlayerStat[] }) => {
+        const found = data.players?.find((p) => p.name.toLowerCase() === target);
         setMyStat(found ?? null);
       });
   }, [session?.user.name]);

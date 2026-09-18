@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { cn, formatDateTime } from "@/lib/utils";
+import { DEFAULT_MIN_GAMES_TO_RANK } from "@/lib/leaderboard";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface AppSettings {
@@ -15,6 +16,7 @@ interface AppSettings {
   oidc_client_id: string;
   oidc_client_secret: string;
   stats_visibility: string;
+  leaderboard_min_games: string;
   local_admin_username: string;
   has_local_admin: string;
 }
@@ -35,6 +37,7 @@ const DEFAULTS: AppSettings = {
   oidc_client_id: "",
   oidc_client_secret: "",
   stats_visibility: "global",
+  leaderboard_min_games: String(DEFAULT_MIN_GAMES_TO_RANK),
   local_admin_username: "",
   has_local_admin: "false",
 };
@@ -460,6 +463,23 @@ export default function AdminPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="bg-surface-card rounded-2xl px-4 py-3 flex items-center justify-between gap-4 mt-2">
+                <div>
+                  <div className="font-medium text-slate-200 text-sm">Minimum Games to Rank</div>
+                  <div className="text-xs text-slate-500">
+                    Players below this are listed unranked, so one lucky win can&apos;t top the board
+                  </div>
+                </div>
+                <input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  value={settings.leaderboard_min_games}
+                  onChange={(e) => set("leaderboard_min_games", e.target.value)}
+                  className="w-16 shrink-0 rounded-xl border border-slate-600 bg-surface px-3 py-1.5 text-center font-mono text-sm text-slate-200"
+                />
               </div>
             </section>
 

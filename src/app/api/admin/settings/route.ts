@@ -14,6 +14,7 @@ const READABLE_KEYS = [
   "oidc_client_id",
   "oidc_client_secret",
   "stats_visibility",
+  "leaderboard_min_games",
   "local_admin_username",
   "has_local_admin", // synthetic: "true" if password hash exists
 ] as const;
@@ -25,6 +26,7 @@ const WRITABLE_KEYS = [
   "oidc_client_id",
   "oidc_client_secret",
   "stats_visibility",
+  "leaderboard_min_games",
   "local_admin_username",
 ] as const;
 
