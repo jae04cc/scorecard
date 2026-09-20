@@ -128,7 +128,7 @@ export default function GameHistoryPage() {
       });
       const shareName = gameLabel(session.gameId, parsedSettings).name;
       const lines = [
-        `${shareName} — ${new Date(session.createdAt).toLocaleDateString()}`,
+        `${shareName}, ${new Date(session.createdAt).toLocaleDateString()}`,
         "",
         ...shareRows.map((s) => {
           const medal = s.rank === 1 ? "🥇" : s.rank === 2 ? "🥈" : s.rank === 3 ? "🥉" : `#${s.rank}`;

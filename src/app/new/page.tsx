@@ -275,7 +275,7 @@ function NewGameForm() {
         {/* Downforce single-player note */}
         {selectedGame?.id === "downforce" && (
           <p className="text-xs text-slate-500 bg-surface-card rounded-xl px-4 py-3 leading-relaxed -mt-2">
-            Downforce replicates your personal scorecard — it tracks your own auction spend, bets, and racing payouts only, not everyone&apos;s scores simultaneously.
+            Downforce replicates your personal scorecard. It tracks your own auction spend, bets, and racing payouts only, not everyone&apos;s scores simultaneously.
           </p>
         )}
 

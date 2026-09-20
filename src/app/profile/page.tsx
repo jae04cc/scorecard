@@ -232,7 +232,7 @@ export default function ProfilePage() {
                   <div className="space-y-1">
                     <p className="text-slate-200 text-sm">
                       {[profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || (
-                        <span className="text-slate-600 italic">Not set — using SSO name</span>
+                        <span className="text-slate-600 italic">Not set, using SSO name</span>
                       )}
                     </p>
                     {nameSaved && (

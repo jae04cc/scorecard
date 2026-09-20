@@ -376,7 +376,7 @@ export default function AdminPage() {
                               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-success/10 border border-success/20 flex-1">
                                 <Check size={13} className="text-success shrink-0" />
                                 <span className="text-xs text-success">
-                                  Configured — username: <span className="font-mono">{settings.local_admin_username}</span>
+                                  Configured. Username: <span className="font-mono">{settings.local_admin_username}</span>
                                 </span>
                               </div>
                               <button

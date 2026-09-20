@@ -10,7 +10,7 @@ const BETTING_PAYOUTS = [
 export const downforceGame: GameDefinition = {
   id: "downforce",
   name: "Downforce",
-  description: "Personal scorecard — track your auction spend, bets, and racing payouts.",
+  description: "Personal scorecard. Track your auction spend, bets, and racing payouts.",
   minPlayers: 1,
   maxPlayers: 1,
   supportsTeams: false,

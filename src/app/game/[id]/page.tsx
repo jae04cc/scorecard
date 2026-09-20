@@ -447,7 +447,7 @@ export default function GamePage() {
         {game.id === "downforce" && (
           <div className="bg-surface-card rounded-2xl px-4 py-4 space-y-3">
             <p className="text-xs text-slate-500 leading-relaxed">
-              This is a personal scorecard for tracking your own Downforce payouts — it's not intended to track everyone's scores simultaneously. Enter your auction spend via the{" "}
+              This is a personal scorecard for tracking your own Downforce payouts. It's not intended to track everyone's scores simultaneously. Enter your auction spend via the{" "}
               <span className="text-slate-400">⚙ settings</span> icon, add a checkpoint after each payout, then mark whether you won at the end. Win/loss results count toward your stats.
             </p>
             {/* Simplified Downforce scorecard illustration */}

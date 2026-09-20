@@ -344,7 +344,7 @@ export function RoundEntryModal({
             )
             .map((f) => f.label)
             .join(" / ");
-          return suffix ? `${label} — ${suffix}` : label;
+          return suffix ? `${label}: ${suffix}` : label;
         })()
       : label;
 
@@ -548,9 +548,9 @@ export function RoundEntryModal({
   };
 
   const modalTitle = phases
-    ? `${game.roundName} ${roundNumber ?? ""} — ${phaseLabel}`
+    ? `${game.roundName} ${roundNumber ?? ""}: ${phaseLabel}`
     : roundEntryLabel
-      ? `Enter ${game.roundName} ${roundNumber ?? ""} — ${roundEntryLabel}`
+      ? `Enter ${game.roundName} ${roundNumber ?? ""}: ${roundEntryLabel}`
       : `Enter ${game.roundName} ${roundNumber ?? ""}`;
 
   return (
