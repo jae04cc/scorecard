@@ -8,8 +8,9 @@ import { requireSessionAccess } from "@/lib/authz";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const actor = await requireSessionAccess(params.id);
   if (actor instanceof NextResponse) return actor;
 

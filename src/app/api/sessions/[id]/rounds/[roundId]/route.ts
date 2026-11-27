@@ -8,8 +8,9 @@ import { requireRoundInSession } from "@/lib/authz";
 // Update scores for an existing round (full replace)
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string; roundId: string } }
+  props: { params: Promise<{ id: string; roundId: string }> }
 ) {
+  const params = await props.params;
   const actor = await requireRoundInSession(params.id, params.roundId);
   if (actor instanceof NextResponse) return actor;
 
@@ -59,8 +60,9 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string; roundId: string } }
+  props: { params: Promise<{ id: string; roundId: string }> }
 ) {
+  const params = await props.params;
   const actor = await requireRoundInSession(params.id, params.roundId);
   if (actor instanceof NextResponse) return actor;
 

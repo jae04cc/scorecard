@@ -7,8 +7,9 @@ import { requirePlayerInSession } from "@/lib/authz";
 // Soft-remove a player from an active session
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string; playerId: string } }
+  props: { params: Promise<{ id: string; playerId: string }> }
 ) {
+  const params = await props.params;
   const actor = await requirePlayerInSession(params.id, params.playerId);
   if (actor instanceof NextResponse) return actor;
 
@@ -27,8 +28,9 @@ export async function DELETE(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string; playerId: string } }
+  props: { params: Promise<{ id: string; playerId: string }> }
 ) {
+  const params = await props.params;
   const actor = await requirePlayerInSession(params.id, params.playerId);
   if (actor instanceof NextResponse) return actor;
 

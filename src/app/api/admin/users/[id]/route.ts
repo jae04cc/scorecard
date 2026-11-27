@@ -6,8 +6,9 @@ import { requireAdmin } from "@/lib/authz";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const actor = await requireAdmin();
   if (actor instanceof NextResponse) return actor;
 

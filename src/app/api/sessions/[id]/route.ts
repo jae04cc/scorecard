@@ -6,8 +6,9 @@ import { requireSessionAccess } from "@/lib/authz";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const actor = await requireSessionAccess(params.id);
   if (actor instanceof NextResponse) return actor;
 
@@ -36,8 +37,9 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const actor = await requireSessionAccess(params.id);
   if (actor instanceof NextResponse) return actor;
 
@@ -97,8 +99,9 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const actor = await requireSessionAccess(params.id);
   if (actor instanceof NextResponse) return actor;
 
